@@ -3,6 +3,8 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import { connectDB } from "./config/db.js";
+import authRoutes from "./routes/auth.routes.js";
+import { errorHandler, routeNotFound } from "./middlewares/errorHandler.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -17,13 +19,18 @@ const api = express.Router();
 
 app.use("/api", api);
 
-api.get("/health", (__req, res) => {
+api.get("/health", (_req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;
   res.status(dbConnected ? 200 : 503).json({
     status: dbConnected ? "ok" : "degraded",
     db: dbConnected ? "connected" : "disconnected",
   });
 });
+
+api.use("/auth", authRoutes);
+
+app.use(routeNotFound);
+app.use(errorHandler);
 
 async function start() {
   if (!MONGO_URI || !CLIENT_URL) {
