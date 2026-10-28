@@ -33,25 +33,29 @@ export async function registerUser(input: RegisterInput) {
     return toPublicUser(user);
   } catch (err) {
     if (isDuplicateKeyError(err)) {
-      throw new HttpError(409, "Username or email already in use");
+      throw new HttpError(
+        409,
+        "El nombre de usuario o el correo ya están en uso",
+      );
     }
     throw err;
   }
 }
 
 export async function loginUser(input: LoginInput) {
-  // Usernames can't contain "@", so an identifier with "@" is an email
+  // Los nombres de usuario no pueden contener "@",
+  // así que un identificador con "@" es un correo
   const field = input.identifier.includes("@") ? "email" : "username";
   const user = await UserModel.findOne({ [field]: input.identifier }).select(
     "+passwordHash",
   );
 
-  // Same message for unknown user and wrong password, so attackers can't
-  // use login to find out which emails/usernames are registered
+  // Mismo mensaje para usuario desconocido y contraseña incorrecta, para que
+  // un atacante no pueda usar el login para saber qué correos/usuarios existen
   const passwordMatches =
     user !== null && (await bcrypt.compare(input.password, user.passwordHash));
   if (!user || !passwordMatches) {
-    throw new HttpError(401, "Invalid credentials");
+    throw new HttpError(401, "Credenciales inválidas");
   }
 
   return {
@@ -67,7 +71,7 @@ export async function refreshSession(refreshToken: string) {
   const user = await UserModel.findById(rotated.userId);
   if (!user) {
     await revokeRefreshToken(rotated.refreshToken);
-    throw new HttpError(401, "Invalid or expired session");
+    throw new HttpError(401, "Sesión inválida o expirada");
   }
 
   return {
@@ -84,7 +88,7 @@ export async function logoutUser(refreshToken: string) {
 export async function getUserById(userId: string) {
   const user = await UserModel.findById(userId);
   if (!user) {
-    throw new HttpError(404, "User not found");
+    throw new HttpError(404, "Usuario no encontrado");
   }
   return toPublicUser(user);
 }

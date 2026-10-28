@@ -1,21 +1,28 @@
 import "dotenv/config";
+import "./zod.js";
 import { z } from "zod";
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
   PORT: z.coerce.number().int().positive().default(5000),
-  MONGO_URI: z.string().min(1),
-  CLIENT_URL: z.url(),
-  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
+  MONGO_URI: z.string().min(1, "Es obligatorio"),
+  CLIENT_URL: z.url("Debe ser una URL válida"),
+  JWT_SECRET: z
+    .string()
+    .min(32, "JWT_SECRET debe tener al menos 32 caracteres"),
   ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
   REFRESH_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(30),
 });
 
 const parsed = envSchema.safeParse(process.env);
 
-// Fail fast: the server must not start with missing or invalid config
+// Falla rápido: el servidor no debe arrancar con configuración faltante o inválida
 if (!parsed.success) {
-  console.error("Invalid environment variables in backend/.env (see .env.example):");
+  console.error(
+    "Variables de entorno inválidas en backend/.env (ver .env.example):",
+  );
   for (const issue of parsed.error.issues) {
     console.error(`  ${issue.path.join(".")}: ${issue.message}`);
   }

@@ -7,7 +7,7 @@ interface RequirementsHintProps {
   note?: string;
 }
 
-// Checklist that marks each requirement as met while the user types
+// Lista que marca cada requisito como cumplido mientras el usuario escribe
 export function RequirementsHint({
   title,
   requirements,

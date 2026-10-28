@@ -12,20 +12,20 @@ export function signAccessToken(userId: string): string {
   });
 }
 
-// Returns the user id stored in a valid access token
+// Devuelve el id de usuario guardado en un access token válido
 export function verifyAccessToken(token: string): string {
   let payload: string | jwt.JwtPayload;
   try {
     payload = jwt.verify(token, env.JWT_SECRET, { algorithms: ["HS256"] });
   } catch (err) {
     if (err instanceof jwt.TokenExpiredError) {
-      throw new HttpError(401, "Token expired");
+      throw new HttpError(401, "El token ha expirado");
     }
-    throw new HttpError(401, "Invalid token");
+    throw new HttpError(401, "Token inválido");
   }
 
   if (typeof payload === "string" || !payload.sub) {
-    throw new HttpError(401, "Invalid token");
+    throw new HttpError(401, "Token inválido");
   }
   return payload.sub;
 }
@@ -34,7 +34,7 @@ function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-// Creates a refresh token, stores its hash and returns the raw token
+// Crea un refresh token, guarda su hash y devuelve el token original
 export async function createRefreshToken(
   userId: string | Types.ObjectId,
 ): Promise<string> {
@@ -50,8 +50,8 @@ export async function createRefreshToken(
 }
 
 /**
- * Consumes a refresh token (it can only be used once) and issues a new one
- * Returns the owner's id plus the new raw token
+ * Consume un refresh token (solo puede usarse una vez) y emite uno nuevo.
+ * Devuelve el id del dueño y el nuevo token original.
  */
 export async function rotateRefreshToken(token: string) {
   const stored = await RefreshTokenModel.findOneAndDelete({
@@ -59,7 +59,7 @@ export async function rotateRefreshToken(token: string) {
     expiresAt: { $gt: new Date() },
   });
   if (!stored) {
-    throw new HttpError(401, "Invalid or expired session");
+    throw new HttpError(401, "Sesión inválida o expirada");
   }
 
   const userId = stored.user.toString();
