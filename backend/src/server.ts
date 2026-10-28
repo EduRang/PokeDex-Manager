@@ -10,7 +10,7 @@ const api = express.Router();
 
 app.use("/api", api);
 
-api.get("/health", (req, res) => {
+api.get("/health", (__req, res) => {
   res.json({ status: "ok", message: "Hello from the PokeDex API" });
 });
 
