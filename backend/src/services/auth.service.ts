@@ -40,12 +40,14 @@ export async function registerUser(input: RegisterInput) {
 }
 
 export async function loginUser(input: LoginInput) {
-  const user = await UserModel.findOne({ email: input.email }).select(
+  // Usernames can't contain "@", so an identifier with "@" is an email
+  const field = input.identifier.includes("@") ? "email" : "username";
+  const user = await UserModel.findOne({ [field]: input.identifier }).select(
     "+passwordHash",
   );
 
-  // Same message for unknown email and wrong password, so attackers
-  // can't use login to find out which emails are registered
+  // Same message for unknown user and wrong password, so attackers can't
+  // use login to find out which emails/usernames are registered
   const passwordMatches =
     user !== null && (await bcrypt.compare(input.password, user.passwordHash));
   if (!user || !passwordMatches) {
