@@ -9,8 +9,8 @@ import { errorHandler, routeNotFound } from "./middlewares/errorHandler.js";
 
 const app = express();
 
-// Only the frontend origin is allowed to call the API from the browser
-// Credentials lets the browser send the refresh token cookie
+// Solo el origen del frontend puede llamar a la API desde el navegador
+// credentials permite que el navegador envíe la cookie del refresh token
 app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
@@ -22,8 +22,8 @@ app.use("/api", api);
 api.get("/health", (_req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;
   res.status(dbConnected ? 200 : 503).json({
-    status: dbConnected ? "ok" : "degraded",
-    db: dbConnected ? "connected" : "disconnected",
+    status: dbConnected ? "ok" : "degradado",
+    db: dbConnected ? "conectada" : "desconectada",
   });
 });
 
@@ -37,17 +37,17 @@ async function start() {
     await connectDB(env.MONGO_URI);
   } catch (err) {
     console.error(
-      "Could not connect to MongoDB. Check MONGO_URI in backend/.env",
+      "No se pudo conectar a MongoDB. Revisa MONGO_URI en backend/.env",
     );
     console.error(
-      "Is it running? Try `docker compose up -d` from the project root.",
+      "¿Está en ejecución? Prueba `docker compose up -d` desde la raíz del proyecto.",
     );
     console.error((err as Error).message);
     process.exit(1);
   }
 
   app.listen(env.PORT, () => {
-    console.log(`Server listening on http://localhost:${env.PORT}`);
+    console.log(`Servidor escuchando en http://localhost:${env.PORT}`);
   });
 }
 

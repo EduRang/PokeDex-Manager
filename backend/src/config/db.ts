@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
 /**
- * Connects to MongoDB. Fails fast (rejects after a few seconds) instead of
- * letting the server start without a database.
+ * Conecta a MongoDB. Falla rápido (rechaza tras unos segundos) en lugar de
+ * dejar que el servidor arranque sin base de datos
  */
 export async function connectDB(uri: string): Promise<void> {
   await mongoose.connect(uri, {
@@ -10,14 +10,14 @@ export async function connectDB(uri: string): Promise<void> {
   });
 
   console.log(
-    `MongoDB connected: ${mongoose.connection.host}:${mongoose.connection.port}/${mongoose.connection.name}`,
+    `MongoDB conectado: ${mongoose.connection.host}:${mongoose.connection.port}/${mongoose.connection.name}`,
   );
 
   mongoose.connection.on("disconnected", () => {
-    console.warn("MongoDB disconnected");
+    console.warn("MongoDB desconectado");
   });
 
   mongoose.connection.on("error", (err) => {
-    console.error("MongoDB error:", err.message);
+    console.error("Error de MongoDB:", err.message);
   });
 }

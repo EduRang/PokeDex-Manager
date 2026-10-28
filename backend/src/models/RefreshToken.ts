@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
 
 const refreshTokenSchema = new Schema({
-  // SHA-256 of the token. The raw token only lives in the user's cookie
+  // SHA-256 del token. El token original solo existe en la cookie del usuario
   tokenHash: {
     type: String,
     required: true,
@@ -15,7 +15,7 @@ const refreshTokenSchema = new Schema({
   expiresAt: {
     type: Date,
     required: true,
-    // TTL index
+    // TTL index: MongoDB borra el documento cuando expiresAt ya pasó
     expires: 0,
   },
 });

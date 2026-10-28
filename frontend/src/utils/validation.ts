@@ -2,7 +2,7 @@ import type { LoginInput, RegisterInput } from "../types/auth";
 
 export type FieldErrors = Partial<Record<string, string>>;
 
-// Mirrors the backend rules so most mistakes are caught before sending
+// Replica las reglas del backend para detectar la mayoría de errores antes de enviar
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface Requirement {
@@ -10,7 +10,7 @@ export interface Requirement {
   isMet: (value: string) => boolean;
 }
 
-// Shown live in the field's hint bubble while the user types
+// Se muestran en vivo en la burbuja de ayuda del campo mientras el usuario escribe
 export const USERNAME_REQUIREMENTS: Requirement[] = [
   {
     label: "Entre 3 y 20 caracteres",

@@ -10,7 +10,7 @@ export interface AuthResponse {
 }
 
 export interface LoginInput {
-  identifier: string; // Email or username
+  identifier: string; // Correo o nombre de usuario
   password: string;
 }
 

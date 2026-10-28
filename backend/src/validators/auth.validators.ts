@@ -5,35 +5,35 @@ export const registerSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .min(3, "Username must be at least 3 characters")
-    .max(20, "Username must be at most 20 characters")
+    .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
+    .max(20, "El nombre de usuario debe tener como máximo 20 caracteres")
     .regex(
       /^[a-z0-9_]+$/,
-      "Username can only contain letters, numbers and _ (without spaces)",
+      "El nombre de usuario solo puede contener letras, números y guion bajo (_), sin espacios",
     ),
-  email: z.email("Invalid email").trim().toLowerCase(),
+  email: z.email("Correo electrónico inválido").trim().toLowerCase(),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    // bcrypt only uses the first 72 bytes of a password
-    .max(72, "Password must be at most 72 characters")
-    .regex(/[A-Z]/, "Password must contain an uppercase letter")
-    .regex(/[a-z]/, "Password must contain a lowercase letter")
-    .regex(/[0-9]/, "Password must contain a number")
-    .regex(/[^A-Za-z0-9\s]/, "Password must contain a special character"),
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    // bcrypt solo usa los primeros 72 bytes de una contraseña
+    .max(72, "La contraseña debe tener como máximo 72 caracteres")
+    .regex(/[A-Z]/, "La contraseña debe incluir una letra mayúscula")
+    .regex(/[a-z]/, "La contraseña debe incluir una letra minúscula")
+    .regex(/[0-9]/, "La contraseña debe incluir un número")
+    .regex(/[^A-Za-z0-9\s]/, "La contraseña debe incluir un carácter especial"),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 
-// Only checks presence: password rules are enforced at registration
+// Solo verifica que existan: las reglas de contraseña se aplican al registrarse
 export const loginSchema = z.object({
-  // Email or username, both are stored lowercase
+  // Correo o nombre de usuario. Ambos se guardan en minúsculas
   identifier: z
     .string()
     .trim()
     .toLowerCase()
-    .min(1, "Email or username is required"),
-  password: z.string().min(1, "Password is required"),
+    .min(1, "El correo o nombre de usuario es obligatorio"),
+  password: z.string().min(1, "La contraseña es obligatoria"),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

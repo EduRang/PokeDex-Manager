@@ -15,10 +15,10 @@ const REFRESH_COOKIE = "refreshToken";
 const isProduction = env.NODE_ENV === "production";
 
 const refreshCookieOptions: CookieOptions = {
-  httpOnly: true, // JavaScript can't read it
+  httpOnly: true, // JavaScript no puede leerla
   secure: isProduction,
   sameSite: isProduction ? "none" : "lax",
-  path: "/api/auth", // only sent to auth endpoints
+  path: "/api/auth", // solo se envía a los endpoints de auth
 };
 
 function setRefreshCookie(res: Response, token: string) {
@@ -29,7 +29,7 @@ function setRefreshCookie(res: Response, token: string) {
 }
 
 export async function register(req: Request, res: Response) {
-  // Throws ZodError on invalid input; the error handler responds 400
+  // Lanza ZodError si los datos son inválidos; el manejador de errores responde 400
   const input = registerSchema.parse(req.body);
   const user = await registerUser(input);
   res.status(201).json({ user });
@@ -45,7 +45,7 @@ export async function login(req: Request, res: Response) {
 export async function refresh(req: Request, res: Response) {
   const token: string | undefined = req.cookies[REFRESH_COOKIE];
   if (!token) {
-    throw new HttpError(401, "No active session");
+    throw new HttpError(401, "No hay una sesión activa");
   }
 
   try {

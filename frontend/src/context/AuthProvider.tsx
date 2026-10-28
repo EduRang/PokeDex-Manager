@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import * as authApi from "../api/auth";
 import { setSessionExpiredHandler } from "../api/client";
 import type { LoginInput, RegisterInput, User } from "../types/auth";
@@ -13,7 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("unauthenticated");
   }, []);
 
-  // On app start, try to restore the session from the refresh cookie
+  // Al iniciar la app, intenta restaurar la sesión con la refresh cookie
   useEffect(() => {
     setSessionExpiredHandler(clearSession);
 

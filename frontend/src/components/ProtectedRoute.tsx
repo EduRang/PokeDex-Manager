@@ -9,7 +9,7 @@ export function ProtectedRoute() {
   if (status === "loading") return <FullPageSpinner />;
 
   if (status === "unauthenticated") {
-    // Remember where the user wanted to go, to return there after login
+    // Recuerda a dónde quería ir el usuario, para volver ahí tras el login
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 

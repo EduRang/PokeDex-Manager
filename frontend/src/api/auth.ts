@@ -23,7 +23,7 @@ export async function logout(): Promise<void> {
   try {
     await api.post("/auth/logout");
   } finally {
-    // Forget the token even if the request failed (e.g. server down)
+    // Olvida el token aunque la solicitud falle (ej. el servidor caído)
     setAccessToken(null);
   }
 }

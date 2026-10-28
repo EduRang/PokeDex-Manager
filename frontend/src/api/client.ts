@@ -3,19 +3,19 @@ import type { AuthResponse } from "../types/auth";
 
 declare module "axios" {
   interface InternalAxiosRequestConfig {
-    // Marks a request already retried after a token refresh
+    // Marca una solicitud ya reintentada tras refrescar el token
     _retried?: boolean;
   }
 }
 
 export const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api`,
-  // Lets the browser send/receive the httpOnly refresh token cookie
+  // Permite al navegador enviar/recibir la cookie httpOnly del refresh token
   withCredentials: true,
 });
 
-// The access token lives only in memory (never localStorage), so it is
-// lost on page reload and recovered through a silent refresh
+// El access token vive solo en memoria (nunca en localStorage), así que se
+// pierde al recargar la página y se recupera con un refresh silencioso
 let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
@@ -28,7 +28,7 @@ export function setSessionExpiredHandler(handler: (() => void) | null) {
   onSessionExpired = handler;
 }
 
-// Shared promise so simultaneous 401s trigger a single refresh
+// Promesa compartida para que varios 401 simultáneos hagan un solo refresh
 let refreshPromise: Promise<AuthResponse> | null = null;
 
 export function refreshSession(): Promise<AuthResponse> {
@@ -51,7 +51,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// A 401 on these means wrong credentials or no session, not an expired token
+// Un 401 en estas rutas significa credenciales incorrectas o sin sesión, no un token expirado
 const NO_REFRESH_URLS = [
   "/auth/login",
   "/auth/register",
