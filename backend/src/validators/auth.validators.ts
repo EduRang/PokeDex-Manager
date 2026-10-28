@@ -16,3 +16,11 @@ export const registerSchema = z.object({
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+// Only checks presence: password rules are enforced at registration
+export const loginSchema = z.object({
+  email: z.email("Invalid email").trim().toLowerCase(),
+  password: z.string().min(1, "Password is required"),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
