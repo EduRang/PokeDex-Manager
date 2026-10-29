@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { env } from "./config/env.js";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
+import pokemonRoutes from "./routes/pokemon.routes.js";
 import { errorHandler, routeNotFound } from "./middlewares/errorHandler.js";
 
 const app = express();
@@ -28,6 +29,7 @@ api.get("/health", (_req, res) => {
 });
 
 api.use("/auth", authRoutes);
+api.use("/pokemon", pokemonRoutes);
 
 app.use(routeNotFound);
 app.use(errorHandler);
