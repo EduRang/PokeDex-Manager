@@ -2,7 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
 import { ProtectedRoute, PublicOnlyRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./layouts/AppLayout";
-import { HomePage } from "./pages/HomePage";
+import { PokemonListPage } from "./pages/PokemonListPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 
@@ -18,7 +18,7 @@ function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<PokemonListPage />} />
             </Route>
           </Route>
 

@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { Button } from "./Button";
+import { Panel } from "./Panel";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -43,36 +45,23 @@ export function ConfirmDialog({
       onClick={(e) => {
         if (e.target === e.currentTarget && !loading) onCancel();
       }}
-      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-white p-0 shadow-xl backdrop:bg-black/50"
+      className="m-auto w-[calc(100%-2rem)] max-w-sm overflow-visible bg-transparent p-0 backdrop:bg-dex-frame-dark/60"
     >
-      <div className="p-6">
-        <h2
-          id="confirm-dialog-title"
-          className="text-lg font-semibold text-slate-900"
-        >
-          {title}
-        </h2>
-        <p className="mt-2 text-sm text-slate-600">{message}</p>
+      <Panel
+        contentClassName="p-5"
+        header={<h2 id="confirm-dialog-title">{title}</h2>}
+      >
+        <p>{message}</p>
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={loading}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-          >
+          <Button variant="secondary" onClick={onCancel} disabled={loading}>
             {cancelLabel}
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={loading}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-60"
-          >
+          </Button>
+          <Button onClick={onConfirm} disabled={loading}>
             {loading && loadingLabel ? loadingLabel : confirmLabel}
-          </button>
+          </Button>
         </div>
-      </div>
+      </Panel>
     </dialog>
   );
 }
