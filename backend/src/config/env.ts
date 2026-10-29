@@ -12,6 +12,14 @@ const envSchema = z.object({
   JWT_SECRET: z
     .string()
     .min(32, "JWT_SECRET debe tener al menos 32 caracteres"),
+  POKEAPI_BASE_URL: z
+    .url("Debe ser una URL válida")
+    .default("https://pokeapi.co/api/v2"),
+  POKEAPI_SPRITES_URL: z
+    .url("Debe ser una URL válida")
+    .default(
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon",
+    ),
   ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
   REFRESH_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(30),
 });
