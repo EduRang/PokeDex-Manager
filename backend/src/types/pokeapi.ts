@@ -15,3 +15,8 @@ export interface PokeApiPokemon {
   stats: { base_stat: number; stat: NamedResource }[];
   abilities: { is_hidden: boolean; slot: number; ability: NamedResource }[];
 }
+
+export interface PokeApiResourceList {
+  count: number;
+  results: NamedResource[];
+}

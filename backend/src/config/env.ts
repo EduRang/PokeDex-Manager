@@ -15,6 +15,11 @@ const envSchema = z.object({
   POKEAPI_BASE_URL: z
     .url("Debe ser una URL válida")
     .default("https://pokeapi.co/api/v2"),
+  POKEAPI_SPRITES_URL: z
+    .url("Debe ser una URL válida")
+    .default(
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon",
+    ),
   ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
   REFRESH_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(30),
 });
