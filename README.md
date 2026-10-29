@@ -150,6 +150,8 @@ Todas requieren `Authorization: Bearer <accessToken>`.
 | GET    | `/api/pokemon/types`                           | Tipos disponibles: `[{ name: "fire", label: "Fuego" }, …]`                                            |
 | GET    | `/api/pokemon/:id`                             | Detalle por número de Pokédex o nombre exacto                                                         |
 
+**Filtro por tipo:** `type` acepta uno o dos tipos separados por coma: `?type=fire,flying` devuelve solo los Pokémon que son de fuego **y** volador (Charizard, Moltres, Ho-Oh…). El máximo es 2 porque ningún Pokémon tiene más de dos tipos.
+
 Ejemplo de listado (`GET /api/pokemon?type=fire&limit=1`):
 
 ```json

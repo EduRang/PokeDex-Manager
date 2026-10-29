@@ -11,14 +11,16 @@ import {
   searchPokemon,
 } from "../services/pokemon.service.js";
 
+// El parámetro de la URL se llama "type", pero ya validado es una
+// lista de hasta 2 tipos, por eso el servicio lo recibe como "types"
 export async function getPokemonList(req: Request, res: Response) {
-  const query = pokemonListQuerySchema.parse(req.query);
-  res.json(await listPokemon(query));
+  const { type, ...query } = pokemonListQuerySchema.parse(req.query);
+  res.json(await listPokemon({ ...query, types: type }));
 }
 
 export async function searchPokemonByName(req: Request, res: Response) {
-  const query = pokemonSearchQuerySchema.parse(req.query);
-  res.json(await searchPokemon(query));
+  const { type, ...query } = pokemonSearchQuerySchema.parse(req.query);
+  res.json(await searchPokemon({ ...query, types: type }));
 }
 
 export async function getPokemonTypes(_req: Request, res: Response) {

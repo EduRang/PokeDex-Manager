@@ -22,14 +22,28 @@ export const pokemonListQuerySchema = z.object({
     .min(1, "Debe ser 1 o mayor")
     .max(50, "Debe ser 50 o menor")
     .default(20),
-  // Vacío equivale a "todos los tipos". Solo se compara con la lista de tipos
-  // conocidos, nunca se usa en una URL de PokéAPI
+  // Uno o dos tipos separados por coma (?type=fire,flying).
+  // Vacío equivale a "todos los tipos". Solo se comparan con la lista de tipos
+  // conocidos, nunca se usan en una URL de PokéAPI
   type: z
     .string()
-    .trim()
     .toLowerCase()
-    .regex(/^[a-z-]{0,20}$/, "Tipo de Pokémon inválido")
-    .optional(),
+    .optional()
+    .transform((value) => [
+      ...new Set(
+        (value ?? "")
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+      ),
+    ])
+    .pipe(
+      z
+        .array(z.string().regex(/^[a-z-]{1,20}$/, "Tipo de Pokémon inválido"))
+        // Un Pokémon tiene como mucho 2 tipos
+        // Con 3 o más nunca habría resultados
+        .max(2, "Se pueden combinar como máximo 2 tipos"),
+    ),
 });
 
 // El nombre no se usa en ninguna URL de PokéAPI (se filtra en memoria),

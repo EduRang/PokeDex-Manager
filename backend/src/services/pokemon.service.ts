@@ -135,7 +135,7 @@ function paginate(
 }
 
 interface ListQuery {
-  type?: string;
+  types: string[];
   page: number;
   limit: number;
 }
@@ -153,7 +153,7 @@ interface PokemonQuery extends ListQuery {
 // Name es optional porque: el listado no trae name, la búsqueda sí
 async function queryPokemon({
   name,
-  type,
+  types,
   page,
   limit,
 }: PokemonQuery): Promise<PokemonPage> {
@@ -167,11 +167,13 @@ async function queryPokemon({
     types: typesByPokemon.get(p.name) ?? [],
   }));
 
-  if (type) {
-    if (!typeInfos.some((t) => t.name === type)) {
-      throw new HttpError(400, `Tipo de Pokémon desconocido: ${type}`);
+  if (types.length > 0) {
+    const unknown = types.find((t) => !typeInfos.some((i) => i.name === t));
+    if (unknown) {
+      throw new HttpError(400, `Tipo de Pokémon desconocido: ${unknown}`);
     }
-    items = items.filter((p) => p.types.includes(type));
+    // El Pokémon debe tener todos los tipos elegidos
+    items = items.filter((p) => types.every((t) => p.types.includes(t)));
   }
 
   if (name) {
