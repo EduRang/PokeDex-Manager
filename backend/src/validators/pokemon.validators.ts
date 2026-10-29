@@ -23,3 +23,16 @@ export const pokemonListQuerySchema = z.object({
     .max(50, "Debe ser 50 o menor")
     .default(20),
 });
+
+// El nombre no se usa en ninguna URL de PokéAPI (se filtra en memoria),
+// así que basta con limitar la longitud
+export const pokemonSearchQuerySchema = pokemonListQuerySchema.extend({
+  name: z
+    .string("Es obligatorio")
+    .trim()
+    .toLowerCase()
+    .min(1, "Es obligatorio")
+    .max(50, "Debe tener 50 caracteres o menos")
+    // PokéAPI usa guiones en vez de espacios: "mr mime" -> "mr-mime"
+    .transform((name) => name.replace(/\s+/g, "-")),
+});

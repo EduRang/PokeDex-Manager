@@ -60,16 +60,29 @@ async function getPokemonIndex(): Promise<PokemonSummary[]> {
   return index;
 }
 
-export async function listPokemon(page: number, limit: number) {
-  const index = await getPokemonIndex();
+function paginate<T>(items: T[], page: number, limit: number) {
   const start = (page - 1) * limit;
   return {
-    pokemon: index.slice(start, start + limit),
+    pokemon: items.slice(start, start + limit),
     pagination: {
       page,
       limit,
-      total: index.length,
-      totalPages: Math.ceil(index.length / limit),
+      total: items.length,
+      totalPages: Math.ceil(items.length / limit),
     },
   };
+}
+
+export async function listPokemon(page: number, limit: number) {
+  return paginate(await getPokemonIndex(), page, limit);
+}
+
+// Búsqueda parcial por nombre
+export async function searchPokemon(name: string, page: number, limit: number) {
+  const matches = (await getPokemonIndex()).filter((p) =>
+    p.name.includes(name),
+  );
+  const startsWith = matches.filter((p) => p.name.startsWith(name));
+  const contains = matches.filter((p) => !p.name.startsWith(name));
+  return paginate([...startsWith, ...contains], page, limit);
 }
