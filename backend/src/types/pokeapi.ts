@@ -20,3 +20,9 @@ export interface PokeApiResourceList {
   count: number;
   results: NamedResource[];
 }
+
+export interface PokeApiType {
+  name: string;
+  names: { name: string; language: NamedResource }[];
+  pokemon: { slot: number; pokemon: NamedResource }[];
+}

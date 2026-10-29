@@ -2,9 +2,9 @@ import { LRUCache } from "lru-cache";
 import { env } from "../config/env.js";
 import { HttpError } from "../errors/HttpError.js";
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
 const CACHE_MAX_ENTRIES = 2000;
-const REQUEST_TIMEOUT_MS = 8000;
+const REQUEST_TIMEOUT_MS = 8000; // 8 segundos
 
 // lru-cache no admite null como valor, así que se envuelve el resultado
 // data: null significa "no existe en PokéAPI" (404).

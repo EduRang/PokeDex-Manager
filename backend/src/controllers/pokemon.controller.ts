@@ -7,17 +7,22 @@ import {
 import {
   getPokemonDetail,
   listPokemon,
+  listPokemonTypes,
   searchPokemon,
 } from "../services/pokemon.service.js";
 
 export async function getPokemonList(req: Request, res: Response) {
-  const { page, limit } = pokemonListQuerySchema.parse(req.query);
-  res.json(await listPokemon(page, limit));
+  const query = pokemonListQuerySchema.parse(req.query);
+  res.json(await listPokemon(query));
 }
 
 export async function searchPokemonByName(req: Request, res: Response) {
-  const { name, page, limit } = pokemonSearchQuerySchema.parse(req.query);
-  res.json(await searchPokemon(name, page, limit));
+  const query = pokemonSearchQuerySchema.parse(req.query);
+  res.json(await searchPokemon(query));
+}
+
+export async function getPokemonTypes(_req: Request, res: Response) {
+  res.json({ types: await listPokemonTypes() });
 }
 
 export async function getPokemon(req: Request, res: Response) {

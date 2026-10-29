@@ -22,6 +22,14 @@ export const pokemonListQuerySchema = z.object({
     .min(1, "Debe ser 1 o mayor")
     .max(50, "Debe ser 50 o menor")
     .default(20),
+  // Vacío equivale a "todos los tipos". Solo se compara con la lista de tipos
+  // conocidos, nunca se usa en una URL de PokéAPI
+  type: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z-]{0,20}$/, "Tipo de Pokémon inválido")
+    .optional(),
 });
 
 // El nombre no se usa en ninguna URL de PokéAPI (se filtra en memoria),
