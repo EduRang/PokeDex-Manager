@@ -23,14 +23,20 @@ const TYPE_COLORS: Record<string, string> = {
 interface TypeBadgeProps {
   type: string;
   label?: string; // Nombre en español. Si aún no llegó, se muestra el original
+  size?: "sm" | "md"; // md: para usarla como opción clicable
 }
 
+const SIZE_CLASSES = {
+  sm: "px-1.5 text-sm leading-5",
+  md: "px-2.5 py-1 leading-5",
+};
+
 // Etiqueta rectangular en mayúsculas
-export function TypeBadge({ type, label }: TypeBadgeProps) {
+export function TypeBadge({ type, label, size = "sm" }: TypeBadgeProps) {
   const colors = TYPE_COLORS[type] ?? "bg-slate-500 text-white";
   return (
     <span
-      className={`rounded-xs border-2 border-black/30 px-1.5 font-display text-sm leading-5 tracking-wide uppercase ${colors}`}
+      className={`inline-block rounded-xs border-2 border-black/30 font-display tracking-wide whitespace-nowrap uppercase ${SIZE_CLASSES[size]} ${colors}`}
     >
       {label ?? type}
     </span>

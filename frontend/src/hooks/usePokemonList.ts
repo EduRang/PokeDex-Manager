@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getPokemonList } from "../api/pokemon";
+import { getPokemonList, searchPokemon } from "../api/pokemon";
 import { getErrorMessage } from "../api/errors";
 import type { PokemonListParams, PokemonPage } from "../types/pokemon";
 
@@ -9,18 +9,31 @@ interface ListResult {
   error: string | null;
 }
 
-export function usePokemonList({ page, limit, type }: PokemonListParams) {
+interface UsePokemonListParams extends PokemonListParams {
+  name?: string; // Si viene, se usa la búsqueda en vez del listado
+}
+
+export function usePokemonList({
+  page,
+  limit,
+  type,
+  name,
+}: UsePokemonListParams) {
   const [result, setResult] = useState<ListResult | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const key = JSON.stringify([page, limit, type, reloadKey]);
+  const key = JSON.stringify([page, limit, type, name, reloadKey]);
 
   useEffect(() => {
     // Si cambian los parámetros antes de que llegue la respuesta, se ignora
     // la anterior para no mostrar una página que ya no se pidió
     let ignore = false;
 
-    getPokemonList({ page, limit, type })
+    const request = name
+      ? searchPokemon({ name, page, limit, type })
+      : getPokemonList({ page, limit, type });
+
+    request
       .then((data) => {
         if (!ignore) setResult({ key, data, error: null });
       })
@@ -37,7 +50,7 @@ export function usePokemonList({ page, limit, type }: PokemonListParams) {
     return () => {
       ignore = true;
     };
-  }, [key, page, limit, type]);
+  }, [key, page, limit, type, name]);
 
   // Está cargando mientras el último resultado sea de otros parámetros.
   // Mientras tanto se siguen devolviendo los datos anteriores.
