@@ -48,6 +48,7 @@ export function usePokemonDetail(idOrName: string) {
     pokemon: loading ? null : (result?.data?.pokemon ?? null),
     previous: loading ? null : (result?.data?.previous ?? null),
     next: loading ? null : (result?.data?.next ?? null),
+    inCollection: loading ? false : Boolean(result?.data?.inCollection),
     error: loading ? null : (result?.error ?? null),
     notFound: !loading && Boolean(result?.notFound),
     loading,

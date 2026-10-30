@@ -1,9 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { usePokemonDetail } from "../hooks/usePokemonDetail";
 import { usePokemonTypes } from "../hooks/usePokemonTypes";
 import { Button, LinkButton } from "../components/Button";
 import { Panel } from "../components/Panel";
+import { CollectionToggle } from "../components/CollectionToggle";
 import {
   InfoRow,
   InfoSectionTitle,
@@ -28,7 +29,7 @@ export function PokemonDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { pokemon, previous, next, error, notFound, retry } =
+  const { pokemon, previous, next, inCollection, error, notFound, retry } =
     usePokemonDetail(id);
   const { labels } = usePokemonTypes();
 
@@ -75,7 +76,13 @@ export function PokemonDetailPage() {
       </div>
     );
   } else {
-    content = <PokemonDetailView pokemon={pokemon} typeLabels={labels} />;
+    content = (
+      <PokemonDetailView
+        pokemon={pokemon}
+        inCollection={inCollection}
+        typeLabels={labels}
+      />
+    );
   }
 
   return (
@@ -123,10 +130,15 @@ export function PokemonDetailPage() {
 
 interface PokemonDetailViewProps {
   pokemon: PokemonDetail;
+  inCollection: boolean;
   typeLabels: Record<string, string>;
 }
 
-function PokemonDetailView({ pokemon, typeLabels }: PokemonDetailViewProps) {
+function PokemonDetailView({
+  pokemon,
+  inCollection,
+  typeLabels,
+}: PokemonDetailViewProps) {
   const name = formatPokemonName(pokemon.name);
   const number = formatPokemonNumber(pokemon.id);
 
@@ -173,8 +185,11 @@ function PokemonDetailView({ pokemon, typeLabels }: PokemonDetailViewProps) {
             </div>
 
             {/* Sin altura mínima: el recuadro se estira hasta la altura de la
-                tabla de datos y ambos terminan a la vez */}
-            <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-dex-cell py-4 md:pl-8">
+                tabla de datos y ambos terminan a la vez.
+                En móvil mide lo que el sprite, así que pt-14 deja sitio arriba
+                para el botón de la colección sin taparlo. Desde tablet no se
+                reserva: el alto lo marca la tabla y achicaría el sprite */}
+            <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-dex-cell pt-14 pb-4 md:py-4 md:pl-8">
               {/* Misma cuadrícula que las tarjetas de la lista, en un tono más
                   oscuro. Va en su propia capa enderezada (skew inverso) para que
                   las líneas queden rectas aunque el recuadro esté inclinado.
@@ -206,6 +221,19 @@ function PokemonDetailView({ pokemon, typeLabels }: PokemonDetailViewProps) {
                     ?
                   </span>
                 )}
+              </Upright>
+
+              {/* Botón de la colección en la esquina superior izquierda. */}
+              <Upright
+                className="absolute top-3 left-3 z-10 md:left-[calc(3rem+(5-var(--rows))*3.5rem*tan(6deg))]"
+                style={{ "--rows": dataRowCount } as CSSProperties}
+              >
+                <CollectionToggle
+                  key={pokemon.id}
+                  pokemonId={pokemon.id}
+                  pokemonName={name}
+                  initialInCollection={inCollection}
+                />
               </Upright>
             </div>
           </section>
