@@ -9,25 +9,56 @@ interface CollectionResult {
   error: string | null;
 }
 
-// Igual que usePokemonList, pero sin caché de páginas: la colección cambia al
-// capturar o liberar, y una página cacheada mostraría por un momento un
-// Pokémon que ya se liberó
+// Caché en memoria de las páginas ya vistas, como en usePokemonList: al volver
+// desde una ficha, la colección se pinta al instante y ScrollRestoration puede
+// devolver al usuario a la tarjeta que abrió. Igualmente se vuelve a pedir la
+// página para tenerla al día.
+// A diferencia de la Pokédex, la colección cambia: el caché se vacía al
+// capturar o liberar y al cerrarse la sesión, para no mostrar un Pokémon ya
+// liberado ni la colección de otro usuario
+const MAX_CACHED_PAGES = 50;
+const pageCache = new Map<string, CollectionPage>();
+// Cambia en cada vaciado. Una respuesta pedida antes de vaciar el caché ya no
+// se guarda, porque podría incluir un Pokémon que se acaba de liberar
+let cacheGeneration = 0;
+
+function cachePage(key: string, page: CollectionPage) {
+  pageCache.delete(key);
+  pageCache.set(key, page);
+  if (pageCache.size > MAX_CACHED_PAGES) {
+    const oldest = pageCache.keys().next().value;
+    if (oldest !== undefined) pageCache.delete(oldest);
+  }
+}
+
+export function clearCollectionCache() {
+  pageCache.clear();
+  cacheGeneration++;
+}
+
 export function useCollection({
   page,
   limit,
   name,
   type,
 }: CollectionListParams) {
+  const paramsKey = JSON.stringify([page, limit, name, type]);
   const [reloadKey, setReloadKey] = useState(0);
-  const key = JSON.stringify([page, limit, name, type, reloadKey]);
-  const [result, setResult] = useState<CollectionResult | null>(null);
+  const key = JSON.stringify([paramsKey, reloadKey]);
+
+  const [result, setResult] = useState<CollectionResult | null>(() => {
+    const cached = pageCache.get(paramsKey);
+    return cached ? { key, data: cached, error: null } : null;
+  });
 
   useEffect(() => {
     // Si cambian los parámetros antes de que llegue la respuesta, se ignora la anterior
     let ignore = false;
+    const generation = cacheGeneration;
 
     getCollection({ page, limit, name, type })
       .then((data) => {
+        if (generation === cacheGeneration) cachePage(paramsKey, data);
         if (!ignore) setResult({ key, data, error: null });
       })
       .catch((err: unknown) => {
@@ -43,7 +74,16 @@ export function useCollection({
     return () => {
       ignore = true;
     };
-  }, [key, page, limit, name, type]);
+  }, [key, paramsKey, page, limit, name, type]);
+
+  const retry = () => setReloadKey((k) => k + 1);
+
+  // Una página ya vista se muestra al instante desde el caché,
+  // mientras se actualiza en segundo plano
+  const cached = pageCache.get(paramsKey);
+  if (result?.key !== key && cached) {
+    return { data: cached, error: null, loading: false, retry };
+  }
 
   // Está cargando mientras el último resultado sea de otros parámetros.
   // Mientras tanto se siguen devolviendo los datos anteriores
@@ -53,6 +93,6 @@ export function useCollection({
     data: result?.data ?? null,
     error: loading ? null : (result?.error ?? null),
     loading,
-    retry: () => setReloadKey((k) => k + 1),
+    retry,
   };
 }

@@ -388,7 +388,7 @@ PokéAPI permite 100 solicitudes por minuto, así que el backend nunca pide lo m
   - La búsqueda espera 300 ms tras la última tecla antes de pedir resultados.
   - Mientras se escribe, se reemplaza la entrada del historial en vez de añadir una por letra.
 - **Volver al listado:** las páginas ya vistas y la lista de tipos se guardan en memoria. Al volver desde la ficha, el listado aparece al instante y `ScrollRestoration` (React Router) devuelve al usuario a la tarjeta que abrió.
-  - La colección no usa ese caché: cambia al capturar o liberar, y una página cacheada mostraría por un momento un Pokémon ya liberado. Además, el caché sobrevive a un cambio de sesión en la misma pestaña, y mostraría la colección del usuario anterior.
+  - "Mi colección" usa un caché igual, pero se vacía al capturar o liberar un Pokémon y al cerrarse la sesión: si no, mostraría por un momento un Pokémon ya liberado o la colección del usuario anterior. Una respuesta pedida antes de vaciarlo tampoco se guarda.
 - **Carga de datos:** hooks propios con `useEffect` que ignoran respuestas obsoletas y mantienen visibles los datos anteriores mientras cargan los nuevos.
 - **Ficha del Pokémon:** desde tablet, todo el interior va inclinado con una sola transformación, para que las diagonales sean continuas, y el texto se endereza para leerse bien. En móvil la ficha es recta.
 - **Formato regional:** las medidas usan el formato numérico de México (`0.4 m`, `90.5 kg`) y la página declara `lang="es-MX"`.

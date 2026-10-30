@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { addToCollection, removeFromCollection } from "../api/collection";
 import { getErrorMessage } from "../api/errors";
+import { clearCollectionCache } from "../hooks/useCollection";
 import { Button } from "./Button";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { PokeBallIcon } from "./PokeBallIcon";
@@ -36,6 +37,8 @@ export function CollectionToggle({
     setStatus("");
     try {
       await addToCollection(pokemonId);
+      // La colección cambió: las páginas cacheadas ya no sirven
+      clearCollectionCache();
       setInCollection(true);
       setStatus(`${pokemonName} se añadió a tu colección`);
     } catch (err) {
@@ -51,6 +54,7 @@ export function CollectionToggle({
     setStatus("");
     try {
       await removeFromCollection(pokemonId);
+      clearCollectionCache();
       setInCollection(false);
       setStatus(`${pokemonName} se quitó de tu colección`);
     } catch (err) {
