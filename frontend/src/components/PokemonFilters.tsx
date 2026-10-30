@@ -37,6 +37,7 @@ export function PokemonFilters({
   const [typesOpen, setTypesOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   // Si el nombre cambia desde fuera (botón atrás, "Limpiar filtros"), se
   // actualiza el campo. Se compara sin espacios para no borrar el que el
@@ -62,6 +63,14 @@ export function PokemonFilters({
         ? selectedTypes.filter((t) => t !== type)
         : [...selectedTypes, type],
     );
+  }
+
+  // Borra al momento, sin esperar al debounce, y deja el foco en el campo
+  // para poder escribir otra búsqueda
+  function clearSearch() {
+    setText("");
+    onNameChange("");
+    searchRef.current?.focus();
   }
 
   function closeTypes() {
@@ -105,11 +114,15 @@ export function PokemonFilters({
     <div className={`relative ${className}`}>
       <Panel contentClassName="p-3">
         <div className="flex flex-col gap-3 sm:flex-row">
-          <div role="search" className="flex-1">
+          <div role="search" className="relative flex-1">
             <label htmlFor="pokemon-search" className="sr-only">
               Buscar por nombre
             </label>
+            {/* La X nativa de type="search" se oculta: no cambia el cursor ni
+                reacciona al pasar el ratón, y Firefox no la muestra. En su
+                lugar va un botón propio, igual en todos los navegadores */}
             <input
+              ref={searchRef}
               id="pokemon-search"
               type="search"
               value={text}
@@ -118,8 +131,19 @@ export function PokemonFilters({
               maxLength={50}
               autoComplete="off"
               spellCheck={false}
-              className={fieldClass}
+              className={`${fieldClass} pr-11 [&::-webkit-search-cancel-button]:appearance-none`}
             />
+            {text && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                aria-label="Borrar búsqueda"
+                title="Borrar búsqueda"
+                className="absolute top-1/2 right-1.5 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-sm text-dex-muted transition hover:bg-dex-cell hover:text-dex-text focus-visible:outline-4 focus-visible:outline-offset-1 focus-visible:outline-dex-accent active:bg-dex-panel"
+              >
+                <span aria-hidden="true">✕</span>
+              </button>
+            )}
           </div>
 
           <div className="flex gap-2">

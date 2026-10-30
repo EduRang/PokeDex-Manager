@@ -69,4 +69,11 @@
       linear-gradient(90deg, var(--color-dex-grid) 2px, transparent 2px);
     background-size: 32px 32px;
   }
+
+  /* Tailwind v4 deja a los botones el cursor por defecto (flecha).
+     Se recupera el pointer en todo lo que se puede pulsar */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
