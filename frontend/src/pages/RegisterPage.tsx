@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type SubmitEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage, getErrorStatus } from "../api/errors";
+import { showErrorToast } from "../utils/toast";
 import { TextField } from "../components/TextField";
 import { RequirementsHint } from "../components/RequirementsHint";
 import { AuthLayout } from "../layouts/AuthLayout";
@@ -58,13 +59,15 @@ export function RegisterPage() {
       });
       navigate("/", { replace: true });
     } catch (err) {
+      // Usuario o correo ya en uso: en el formulario, porque es lo que hay que
+      // corregir. Otros fallos (sin conexión, servidor caído): aviso flotante
       const taken = getErrorStatus(err) === 409;
       setUserTaken(taken);
-      setFormError(
-        taken
-          ? "El nombre de usuario o el correo ya están registrados"
-          : getErrorMessage(err),
-      );
+      if (taken) {
+        setFormError("El nombre de usuario o el correo ya están registrados");
+      } else {
+        showErrorToast(getErrorMessage(err));
+      }
       setSubmitting(false);
     }
   }
