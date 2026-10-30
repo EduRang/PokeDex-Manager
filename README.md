@@ -101,16 +101,18 @@ Se puede iniciar sesión con el usuario o con el correo. Algunas búsquedas para
 
 El servidor valida estas variables al arrancar y no inicia si falta alguna obligatoria o tiene un formato inválido.
 
-| Variable                    | Obligatoria | Por defecto                       | Descripción                                                |
-| --------------------------- | ----------- | --------------------------------- | ---------------------------------------------------------- |
-| `MONGO_URI`                 | Sí          | —                                 | Cadena de conexión de MongoDB                              |
-| `JWT_SECRET`                | Sí          | —                                 | Clave para firmar los access tokens (mínimo 32 caracteres) |
-| `CLIENT_URL`                | Sí          | —                                 | Origen del frontend permitido por CORS                     |
-| `PORT`                      | No          | `5000`                            | Puerto del servidor                                        |
-| `ACCESS_TOKEN_TTL_MINUTES`  | No          | `15`                              | Duración del access token                                  |
-| `REFRESH_TOKEN_TTL_MINUTES` | No          | `30`                              | Duración de la sesión sin actividad                        |
-| `POKEAPI_BASE_URL`          | No          | `https://pokeapi.co/api/v2`       | URL base de PokéAPI                                        |
-| `POKEAPI_SPRITES_URL`       | No          | Repositorio de sprites de PokéAPI | URL base de las imágenes de los Pokémon                    |
+| Variable                    | Obligatoria | Por defecto                       | Descripción                                                                                                           |
+| --------------------------- | ----------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `MONGO_URI`                 | Sí          | —                                 | Cadena de conexión de MongoDB                                                                                         |
+| `JWT_SECRET`                | Sí          | —                                 | Clave para firmar los access tokens (mínimo 32 caracteres)                                                            |
+| `CLIENT_URL`                | Sí          | —                                 | Origen del frontend permitido por CORS y en las rutas de autenticación                                                |
+| `PORT`                      | No          | `5000`                            | Puerto del servidor                                                                                                   |
+| `ACCESS_TOKEN_TTL_MINUTES`  | No          | `15`                              | Duración del access token                                                                                             |
+| `REFRESH_TOKEN_TTL_MINUTES` | No          | `30`                              | Duración de la sesión sin actividad                                                                                   |
+| `POKEAPI_BASE_URL`          | No          | `https://pokeapi.co/api/v2`       | URL base de PokéAPI                                                                                                   |
+| `POKEAPI_SPRITES_URL`       | No          | Repositorio de sprites de PokéAPI | URL base de las imágenes de los Pokémon                                                                               |
+| `COOKIE_SECURE`             | No          | `true`                            | La cookie de sesión solo viaja por HTTPS. `false` solo en local (`http://`); `.env.example` ya lo trae así            |
+| `COOKIE_SAMESITE`           | No          | `strict`                          | `strict`, `lax` o `none`. `none` solo si frontend y backend están en dominios distintos, y exige `COOKIE_SECURE=true` |
 
 ### Frontend (`frontend/.env`)
 
@@ -319,10 +321,14 @@ Un documento por cada Pokémon de la colección de un usuario.
 - **Access token (JWT, 15 min):** se envía como `Authorization: Bearer`. En el frontend se guarda solo en memoria, nunca en `localStorage`, para que un ataque XSS no pueda robarlo de forma persistente.
 - **Refresh token (30 min de inactividad):**
   - Es un valor aleatorio opaco y viaja en una cookie `httpOnly` que JavaScript no puede leer, limitada a `/api/auth`.
+  - Por defecto es `Secure` y `SameSite=Strict`: solo viaja por HTTPS y nunca en solicitudes que vengan de otro sitio. Se configura con `COOKIE_SECURE` y `COOKIE_SAMESITE`, no con `NODE_ENV`, así en local solo se relaja `Secure` (no hay HTTPS) y el resto de protecciones se mantienen.
   - En la base de datos se guarda solo su hash SHA-256, con un índice TTL que borra las sesiones vencidas.
   - Se rota en cada uso: cada renovación invalida el token anterior.
 - **Renovación silenciosa:** al recargar la página o cuando una solicitud recibe un `401`, el cliente renueva la sesión una sola vez y reintenta. Si llegan varias solicitudes a la vez, comparten una única renovación.
 - **Cierre de sesión real:** el logout borra la sesión en el servidor, no solo en el navegador.
+- **Protección contra CSRF:**
+  - El resto de la API se autentica con el access token en la cabecera `Authorization`, que el navegador nunca añade solo, así que otra web no puede usarlo.
+  - Las rutas de `/api/auth` (las que usan la cookie) rechazan con `403` cualquier solicitud cuya cabecera `Origin` no sea `CLIENT_URL`. Las solicitudes sin `Origin` (curl, Postman) no vienen de un navegador y se aceptan.
 - **Contraseñas:** se guardan con bcrypt y nunca se devuelven en las respuestas. Ante credenciales incorrectas, el login responde siempre el mismo mensaje genérico, para no revelar si el usuario existe.
 - **Unicidad:** la garantizan los índices únicos de MongoDB, no una consulta previa, lo que evita condiciones de carrera entre registros simultáneos.
 
@@ -405,5 +411,5 @@ PokéAPI permite 100 solicitudes por minuto, así que el backend nunca pide lo m
 - **Sin capa de repositorio:** los servicios usan los modelos de Mongoose directamente. Con tres colecciones, una capa extra añadiría código sin beneficio real.
 - **Despliegue en dominios separados:**
   - El backend permite CORS con credenciales solo desde `CLIENT_URL`.
-  - En producción, la cookie de refresh usa `SameSite=None; Secure`, así que el backend debe servirse por HTTPS.
-  - Algunos navegadores bloquean las cookies de terceros. Servir frontend y backend bajo el mismo dominio (ej. con un proxy inverso) evita el problema.
+  - Lo recomendable es servir frontend y backend bajo el mismo sitio (ej. `app.dominio.com` y `api.dominio.com`, o un proxy inverso): así la cookie puede seguir con `SameSite=Strict`.
+  - Si están en dominios distintos (ej. Vercel y Heroku), hace falta `COOKIE_SAMESITE=none`, que exige HTTPS (`COOKIE_SECURE=true`). La comprobación de `Origin` sigue protegiendo contra CSRF, pero algunos navegadores bloquean las cookies de terceros.

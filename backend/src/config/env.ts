@@ -2,27 +2,38 @@ import "dotenv/config";
 import "./zod.js";
 import { z } from "zod";
 
-const envSchema = z.object({
-  NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
-  PORT: z.coerce.number().int().positive().default(5000),
-  MONGO_URI: z.string().min(1, "Es obligatorio"),
-  CLIENT_URL: z.url("Debe ser una URL válida"),
-  JWT_SECRET: z
-    .string()
-    .min(32, "JWT_SECRET debe tener al menos 32 caracteres"),
-  POKEAPI_BASE_URL: z
-    .url("Debe ser una URL válida")
-    .default("https://pokeapi.co/api/v2"),
-  POKEAPI_SPRITES_URL: z
-    .url("Debe ser una URL válida")
-    .default(
-      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon",
-    ),
-  ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
-  REFRESH_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(30),
-});
+const envSchema = z
+  .object({
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
+    PORT: z.coerce.number().int().positive().default(5000),
+    MONGO_URI: z.string().min(1, "Es obligatorio"),
+    CLIENT_URL: z.url("Debe ser una URL válida"),
+    JWT_SECRET: z
+      .string()
+      .min(32, "JWT_SECRET debe tener al menos 32 caracteres"),
+    POKEAPI_BASE_URL: z
+      .url("Debe ser una URL válida")
+      .default("https://pokeapi.co/api/v2"),
+    POKEAPI_SPRITES_URL: z
+      .url("Debe ser una URL válida")
+      .default(
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon",
+      ),
+    ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
+    REFRESH_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(30),
+    // COOKIE_SECURE=false solo en local, donde todo va por http://
+    COOKIE_SECURE: z.stringbool().default(true),
+    // strict: frontend y backend en el mismo sitio (localhost, o app. y api. del
+    // mismo dominio). none: solo si están en dominios distintos
+    COOKIE_SAMESITE: z.enum(["strict", "lax", "none"]).default("strict"),
+  })
+  // Los navegadores rechazan SameSite=None sin Secure
+  .refine((e) => e.COOKIE_SAMESITE !== "none" || e.COOKIE_SECURE, {
+    message: "COOKIE_SAMESITE=none exige COOKIE_SECURE=true",
+    path: ["COOKIE_SAMESITE"],
+  });
 
 const parsed = envSchema.safeParse(process.env);
 

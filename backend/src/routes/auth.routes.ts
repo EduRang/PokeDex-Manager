@@ -7,8 +7,11 @@ import {
   register,
 } from "../controllers/auth.controller.js";
 import { requireAuth } from "../middlewares/requireAuth.js";
+import { requireTrustedOrigin } from "../middlewares/requireTrustedOrigin.js";
 
 const router = Router();
+
+router.use(requireTrustedOrigin);
 
 router.post("/register", register);
 router.post("/login", login);
