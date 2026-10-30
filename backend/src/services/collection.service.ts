@@ -58,7 +58,8 @@ interface CollectionQuery {
 }
 
 // Se lee solo desde MongoDB, sin depender de PokéAPI.
-// La paginación la hace la base de datos con el índice { user, createdAt, _id }
+// En orden de Pokédex, no en el orden de captura.
+// La paginación la hace la base de datos con el índice { user, pokemonId }
 export async function listCollection(
   userId: string,
   { page, limit }: CollectionQuery,
@@ -66,7 +67,7 @@ export async function listCollection(
   const filter = { user: userId };
   const [entries, total] = await Promise.all([
     CollectionEntryModel.find(filter)
-      .sort({ createdAt: -1, _id: -1 })
+      .sort({ pokemonId: 1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .lean(),
