@@ -1,0 +1,9 @@
+# Se instalan y compilan dentro de la imagen
+node_modules
+dist
+
+# Los secretos nunca entran en la imagen: llegan como variables de entorno
+.env
+.env.*
+
+*.log
