@@ -1,8 +1,8 @@
 # PokéDex Manager
 
-Aplicación web para explorar la Pokédex, con registro e inicio de sesión de usuarios. El backend actúa como proxy de [PokéAPI](https://pokeapi.co/) con caché, para no superar su límite de 100 solicitudes por minuto, y ofrece listado paginado de Pokémon, búsqueda por nombre, filtro por tipo y detalle.
+Aplicación web para explorar la Pokédex, con registro e inicio de sesión de usuarios. El backend actúa como proxy de [PokéAPI](https://pokeapi.co/) con caché, para no superar su límite de 100 solicitudes por minuto, y ofrece listado paginado de Pokémon, búsqueda por nombre, filtro por tipo y detalle. Cada usuario tiene además su colección personal de Pokémon, guardada en MongoDB.
 
-En el frontend se puede recorrer la Pokédex página a página, buscar por nombre, filtrar por uno o dos tipos y abrir la ficha de cada Pokémon, con una interfaz inspirada en la Pokédex de Nintendo DS.
+En el frontend se puede recorrer la Pokédex página a página, buscar por nombre, filtrar por uno o dos tipos y abrir la ficha de cada Pokémon, con una interfaz inspirada en la Pokédex de Nintendo DS. Desde la ficha se captura un Pokémon para añadirlo a "Mi colección" o se libera para quitarlo, y la colección se puede recorrer, buscar y filtrar igual que la Pokédex.
 
 ## Índice
 
@@ -12,6 +12,7 @@ En el frontend se puede recorrer la Pokédex página a página, buscar por nombr
 - [Variables de entorno](#variables-de-entorno)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [API](#api)
+- [Base de datos](#base-de-datos)
 - [Decisiones técnicas](#decisiones-técnicas)
 
 ## Stack
@@ -104,21 +105,21 @@ PokeDex-Manager/
 │   ├── config/              Variables de entorno (validadas con Zod) y conexión a MongoDB
 │   ├── routes/              Definición de rutas
 │   ├── controllers/         Leen la solicitud, llaman al servicio y responden
-│   ├── services/            Lógica de negocio (auth, pokemon, token)
+│   ├── services/            Lógica de negocio (auth, collection, pokemon, token)
 │   ├── clients/             Cliente HTTP de PokéAPI con caché
 │   ├── validators/          Esquemas Zod de entrada
-│   ├── models/              Modelos de Mongoose (RefreshToken, User)
+│   ├── models/              Modelos de Mongoose (CollectionEntry, RefreshToken, User)
 │   ├── middlewares/         requireAuth, manejo central de errores y 404
 │   ├── errors/              HttpError y utilidades de errores de MongoDB
 │   └── types/               Contrato de la API y formas de las respuestas de PokéAPI
 └── frontend/src/
     ├── api/                 Cliente Axios (token + renovación automática) y llamadas
-    ├── context/, hooks/     Estado de la sesión y carga de datos (listado, ficha, tipos)
-    ├── pages/               Login, registro, listado de Pokémon y ficha de detalle
+    ├── context/, hooks/     Estado de la sesión, carga de datos (listado, ficha, colección, tipos) y filtros en la URL
+    ├── pages/               Login, registro, listado de Pokémon, ficha de detalle y "Mi colección"
     ├── layouts/             Estructura de las pantallas públicas y privadas
     ├── components/          Tarjetas, filtros, paginación, ficha, campos de formulario, diálogos, etc.
     ├── types/               Tipos compartidos (mismo contrato que el backend)
-    └── utils/               Validación de formularios y formato de nombres, números y medidas
+    └── utils/               Validación de formularios, formato de nombres, números y medidas, y origen de la navegación
 ```
 
 El backend sigue una arquitectura por capas: **rutas → controladores → servicios → clientes/modelos**. Los controladores no contienen lógica de negocio y los servicios no hablan con Express.
@@ -195,17 +196,97 @@ Ejemplo de detalle (`GET /api/pokemon/25`):
     ]
   },
   "previous": { "id": 24, "name": "arbok", "sprite": "…/24.png" },
-  "next": { "id": 26, "name": "raichu", "sprite": "…/26.png" }
+  "next": { "id": 26, "name": "raichu", "sprite": "…/26.png" },
+  "inCollection": true
 }
 ```
 
 `previous` y `next` siguen el mismo orden que el listado: tras el #1025 continúan las formas alternativas (#10001 en adelante). Son `null` en el primero y el último.
+
+`inCollection` indica si el Pokémon está en la colección del usuario que hace la solicitud. Va fuera de `pokemon` porque depende del usuario, no del Pokémon.
+
+### Colección
+
+Todas requieren `Authorization: Bearer <accessToken>`. Cada usuario solo ve y modifica su propia colección.
+
+| Método | Ruta                                       | Descripción                                                                                       |
+| ------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| GET    | `/api/collection?page=&limit=&name=&type=` | Colección paginada, en orden de Pokédex. Mismas reglas que la Pokédex; `name` y `type` opcionales |
+| PUT    | `/api/collection/:pokemonId`               | Añade (captura) el Pokémon → `201` si se añadió, `204` si ya estaba, `404` si el número no existe |
+| DELETE | `/api/collection/:pokemonId`               | Quita (libera) el Pokémon → `204`, también si no estaba                                           |
+
+- **`:pokemonId`:** solo el número de Pokédex (`25`), no el nombre, porque es lo que se guarda. Debe ser un entero mayor que 0.
+- **Idempotencia:** `PUT` y `DELETE` describen el estado final ("Pikachu está en mi colección" / "no está"), así que repetirlos no es un error. Un doble clic, dos pestañas abiertas o un reintento tras perder la respuesta no generan errores falsos.
+- **Búsqueda y filtro:** `name` busca el texto en cualquier parte del nombre y `type` acepta hasta dos tipos (el Pokémon debe tener ambos), igual que en la Pokédex. Los resultados mantienen el orden de Pokédex.
+
+Ejemplo (`GET /api/collection?type=fire&limit=2`):
+
+```json
+{
+  "pokemon": [
+    {
+      "id": 4,
+      "name": "charmander",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png",
+      "types": ["fire"],
+      "addedAt": "2025-08-05T18:30:12.512Z"
+    },
+    {
+      "id": 6,
+      "name": "charizard",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png",
+      "types": ["fire", "flying"],
+      "addedAt": "2025-08-05T18:31:47.090Z"
+    }
+  ],
+  "pagination": { "page": 1, "limit": 2, "total": 4, "totalPages": 2 }
+}
+```
 
 ### Otros
 
 | Método | Ruta          | Descripción                                                                             |
 | ------ | ------------- | --------------------------------------------------------------------------------------- |
 | GET    | `/api/health` | Estado del servidor y de la base de datos (`200`, o `503` si MongoDB no está conectada) |
+
+## Base de datos
+
+MongoDB guarda solo los datos propios de la aplicación: usuarios, sesiones y colecciones. Los datos de los Pokémon vienen de PokéAPI y se cachean en memoria. Los índices los crea Mongoose al arrancar el servidor.
+
+### `users`
+
+| Campo                    | Tipo   | Notas                                                             |
+| ------------------------ | ------ | ----------------------------------------------------------------- |
+| `username`               | String | Único, en minúsculas                                              |
+| `email`                  | String | Único, en minúsculas                                              |
+| `passwordHash`           | String | Hash bcrypt. Nunca se devuelve en las consultas (`select: false`) |
+| `createdAt`, `updatedAt` | Date   | Automáticos (`timestamps`)                                        |
+
+Índices: `username` único y `email` único.
+
+### `refreshtokens`
+
+| Campo       | Tipo     | Notas                                                               |
+| ----------- | -------- | ------------------------------------------------------------------- |
+| `tokenHash` | String   | SHA-256 del refresh token; el token original solo está en la cookie |
+| `user`      | ObjectId | Referencia a `users`                                                |
+| `expiresAt` | Date     | Fin de la sesión si no hay actividad                                |
+
+Índices: `tokenHash` único y TTL sobre `expiresAt`, con el que MongoDB borra solas las sesiones vencidas.
+
+### `collectionentries`
+
+Un documento por cada Pokémon de la colección de un usuario.
+
+| Campo                    | Tipo     | Notas                                                                 |
+| ------------------------ | -------- | --------------------------------------------------------------------- |
+| `user`                   | ObjectId | Referencia a `users`                                                  |
+| `pokemonId`              | Number   | Número de Pokédex                                                     |
+| `name`                   | String   | Copia del nombre en PokéAPI al capturarlo (ej. `charizard`)           |
+| `types`                  | [String] | Copia de los tipos al capturarlo, en orden (ej. `["fire", "flying"]`) |
+| `createdAt`, `updatedAt` | Date     | `createdAt` es la fecha de captura (`addedAt` en la API)              |
+
+Índices: `{ user, pokemonId }` único. Impide que un Pokémon esté dos veces en la misma colección y sirve también para listarla en orden de Pokédex y paginada.
 
 ## Decisiones técnicas
 
@@ -247,6 +328,16 @@ PokéAPI permite 100 solicitudes por minuto, así que el backend nunca pide lo m
 - **Seguridad:** el parámetro `:id` solo acepta letras, números y guiones, para que nadie pueda usar el proxy para llamar a otras rutas de PokéAPI.
 - **URLs de PokéAPI:** el frontend nunca llama a PokéAPI directamente. La `url` que devuelve PokéAPI se transforma en `id` y `sprite`, y el detalle se pide a nuestro backend.
 
+### Colección personal
+
+- **Copia del nombre y los tipos:** al capturar un Pokémon se guardan su nombre y sus tipos, tomados del índice y de los tipos que ya están en caché (sin llamadas extra a PokéAPI). Así la colección se lee solo desde MongoDB y sigue funcionando aunque PokéAPI no responda o el caché esté vacío tras reiniciar el servidor. Nombres y tipos casi nunca cambian, así que la copia no se queda desactualizada en la práctica.
+- **El sprite no se guarda:** se construye a partir del número con `POKEAPI_SPRITES_URL`. Esa URL base viene de la configuración y puede cambiar, así que guardar la URL completa sería frágil.
+- **Sin duplicados ni condiciones de carrera:** capturar intenta insertar directamente y el índice único `{ user, pokemonId }` rechaza el duplicado, igual que con los usuarios. Dos solicitudes simultáneas no pueden añadir el mismo Pokémon dos veces.
+- **Validación:** antes de añadir un Pokémon se comprueba que su número existe en PokéAPI (`404` si no), para que nadie pueda guardar `#99999`.
+- **Orden de Pokédex:** la colección se lista por número, como en los juegos, y no por fecha de captura. La base de datos hace la paginación (`sort`, `skip`, `limit` y `countDocuments`) con el mismo índice único.
+- **Búsqueda en MongoDB:** el nombre se busca con `$regex`. El texto del usuario se escapa antes, para que caracteres como `.` o `*` se busquen literalmente y nadie pueda enviar un patrón costoso. El filtro por tipos usa `$all`.
+- **Estado en la ficha:** `GET /api/pokemon/:id` incluye `inCollection`, consultado a la vez que el Pokémon anterior y el siguiente, así la ficha sabe el estado del botón sin otra solicitud.
+
 ### Interfaz (frontend)
 
 - **Diseño:** inspirado en las Pokédex de Nintendo DS, sin usar recursos del juego. La Poké Ball, la Super Ball y el lápiz son pixel art propio en SVG y los marcos, etiquetas de tipo y formas inclinadas son CSS.
@@ -258,6 +349,15 @@ PokéAPI permite 100 solicitudes por minuto, así que el backend nunca pide lo m
   - Objetivos táctiles de al menos 24 px y texto real en lugar de imágenes de texto. Por eso las etiquetas de tipo son propias y no los iconos de PokéAPI, que además solo están en inglés.
 - **Tipografía:** DotGothic16 está dibujada sobre una cuadrícula de 16 px, así que se usa a 16 o 32 px para que se vea nítida. La única excepción es el título de la barra superior en móvil, a 18 px: es lo más grande que cabe junto a "Cerrar sesión" en una pantalla de 360 px. Pixelify Sans se usa solo en las etiquetas de tipo.
 - **Barra superior:** el nombre de usuario aparece como una ficha de entrenador ("ENTRENADOR | nombre") con una Super Ball. En móvil solo se ve la Super Ball; al pulsarla, el nombre aparece en una burbuja.
+- **Navegación:** pestañas "Pokédex" y "Mi colección" bajo la barra superior. La pestaña activa tiene el color del fondo de la página, como una carpeta abierta.
+- **Capturar y liberar:** en la esquina del recuadro del sprite.
+  - Sin capturar: botón "Capturar" con una Poké Ball que se balancea al pasar el ratón y mientras se guarda.
+  - Capturado: la Poké Ball en celeste (estado) junto al botón "Liberar" (acción). Liberar pide confirmación.
+  - El estado cambia cuando el servidor confirma, no antes, para no mostrar algo que no se guardó.
+  - Desde tablet la ficha está inclinada y el botón se desplaza según el número de filas de datos. Su posición se compensa para que quede siempre a la misma distancia del borde.
+- **Mi colección:** misma cuadrícula, paginación, búsqueda y filtro por tipos que la Pokédex (comparten el hook `useListFilters`).
+  - Si la página pedida queda vacía (por ejemplo, tras liberar el último Pokémon de la última página), se redirige a la nueva última página.
+  - Al abrir una ficha desde la colección, el botón dice "Volver a mi colección" y la pestaña activa es "Mi colección". El origen viaja en el estado de navegación de React Router y se conserva al pasar al Pokémon anterior o siguiente.
 - **Paginación:**
   - Números de página con huecos (`1 … 5 6 [7] 8 9 … 68`), siempre con la primera y la última, y botones de primera, anterior, siguiente y última página. La barra tiene siempre la misma cantidad de elementos, así no cambia de ancho al avanzar. En móvil se reduce a `1 … [7] … 68`.
   - "Página [7] de 68" permite escribir un número y saltar con Enter o con "Ir", que solo se habilita mientras se edita. El campo acepta solo dígitos; 0 lleva a la primera página y un número mayor que el total, a la última. Salir del campo sin confirmar lo devuelve a la página actual.
@@ -265,6 +365,7 @@ PokéAPI permite 100 solicitudes por minuto, así que el backend nunca pide lo m
   - La búsqueda espera 300 ms tras la última tecla antes de pedir resultados.
   - Mientras se escribe, se reemplaza la entrada del historial en vez de añadir una por letra.
 - **Volver al listado:** las páginas ya vistas y la lista de tipos se guardan en memoria. Al volver desde la ficha, el listado aparece al instante y `ScrollRestoration` (React Router) devuelve al usuario a la tarjeta que abrió.
+  - La colección no usa ese caché: cambia al capturar o liberar, y una página cacheada mostraría por un momento un Pokémon ya liberado. Además, el caché sobrevive a un cambio de sesión en la misma pestaña, y mostraría la colección del usuario anterior.
 - **Carga de datos:** hooks propios con `useEffect` que ignoran respuestas obsoletas y mantienen visibles los datos anteriores mientras cargan los nuevos.
 - **Ficha del Pokémon:** desde tablet, todo el interior va inclinado con una sola transformación, para que las diagonales sean continuas, y el texto se endereza para leerse bien. En móvil la ficha es recta.
 - **Formato regional:** las medidas usan el formato numérico de México (`0.4 m`, `90.5 kg`) y la página declara `lang="es-MX"`.
@@ -273,7 +374,7 @@ PokéAPI permite 100 solicitudes por minuto, así que el backend nunca pide lo m
 
 - **Prefijo `/api`:** todas las rutas (incluidas las de autenticación) cuelgan de `/api`, para separar claramente la API de cualquier otra ruta y facilitar un proxy inverso.
 - **Idioma:** los textos visibles para el usuario, los mensajes de error, los logs y los comentarios están en español. Los nombres de variables, funciones, archivos y campos de la API están en inglés, por convención.
-- **Sin capa de repositorio:** los servicios usan los modelos de Mongoose directamente. Con dos colecciones, una capa extra añadiría código sin beneficio real.
+- **Sin capa de repositorio:** los servicios usan los modelos de Mongoose directamente. Con tres colecciones, una capa extra añadiría código sin beneficio real.
 - **Despliegue en dominios separados:**
   - El backend permite CORS con credenciales solo desde `CLIENT_URL`.
   - En producción, la cookie de refresh usa `SameSite=None; Secure`, así que el backend debe servirse por HTTPS.
