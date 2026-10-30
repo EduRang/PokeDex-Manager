@@ -39,6 +39,7 @@ export interface PokemonDetailResponse {
   pokemon: PokemonDetail;
   previous: PokemonNeighbor | null;
   next: PokemonNeighbor | null;
+  inCollection: boolean; // Si está en la colección del usuario
 }
 
 export interface Pagination {
