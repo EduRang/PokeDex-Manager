@@ -1,33 +1,35 @@
 import type { ReactNode } from "react";
+import { Panel } from "../components/Panel";
 
 interface AuthLayoutProps {
   title: string;
-  subtitle: string;
   children: ReactNode;
   footer: ReactNode;
 }
 
 export function AuthLayout({
   title,
-  subtitle,
   children,
   footer,
 }: AuthLayoutProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-8">
-      <div className="w-full max-w-md">
-        <p className="mb-6 text-center text-2xl font-bold text-red-600">
-          PokéDex Manager
-        </p>
+    <div className="flex min-h-screen flex-col">
+      <header className="border-b-4 border-dex-frame-dark bg-dex-accent py-3 text-center text-dex-lg text-white pixel-shadow-accent">
+        PokéDex Manager
+      </header>
 
-        <div className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
-          <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
-          <p className="mt-1 mb-6 text-sm text-slate-500">{subtitle}</p>
+      <main className="flex flex-1 items-center justify-center px-4 py-8">
+        <Panel
+          className="w-full max-w-md"
+          contentClassName="p-6 sm:p-8"
+          header={<h1>{title}</h1>}
+        >
           {children}
-        </div>
-
-        <p className="mt-6 text-center text-sm text-slate-600">{footer}</p>
-      </div>
-    </main>
+          <p className="mt-6 border-t-2 border-dex-edge pt-4 text-center">
+            {footer}
+          </p>
+        </Panel>
+      </main>
+    </div>
   );
 }

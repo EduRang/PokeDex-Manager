@@ -5,6 +5,7 @@ export interface PokemonStat {
 
 export interface PokemonAbility {
   name: string;
+  label: string;
   isHidden: boolean;
 }
 
@@ -44,4 +45,9 @@ export interface PokemonPage {
 export interface PokemonType {
   name: string; // Se usa para filtrar: "fire"
   label: string; // Se muestra en la interfaz: "Fuego"
+}
+
+export interface PokemonNeighbors {
+  previous: PokemonSummary | null;
+  next: PokemonSummary | null;
 }

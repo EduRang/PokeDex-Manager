@@ -1,17 +1,19 @@
-export function Spinner({ className = "h-8 w-8" }: { className?: string }) {
+import { PokeBallIcon } from "./PokeBallIcon";
+
+export function Spinner({ className = "h-10 w-10" }: { className?: string }) {
   return (
-    <div
+    <PokeBallIcon
       role="status"
       aria-label="Cargando"
-      className={`animate-spin rounded-full border-4 border-slate-200 border-t-red-600 ${className}`}
+      className={`origin-bottom animate-wobble ${className}`}
     />
   );
 }
 
 export function FullPageSpinner() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100">
-      <Spinner className="h-12 w-12" />
+    <div className="flex min-h-screen items-center justify-center">
+      <Spinner className="h-14 w-14" />
     </div>
   );
 }

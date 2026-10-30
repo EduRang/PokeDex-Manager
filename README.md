@@ -2,6 +2,8 @@
 
 Aplicación web para explorar la Pokédex, con registro e inicio de sesión de usuarios. El backend actúa como proxy de [PokéAPI](https://pokeapi.co/) con caché, para no superar su límite de 100 solicitudes por minuto, y ofrece listado paginado de Pokémon, búsqueda por nombre, filtro por tipo y detalle.
 
+En el frontend se puede recorrer la Pokédex página a página, buscar por nombre, filtrar por uno o dos tipos y abrir la ficha de cada Pokémon, con una interfaz inspirada en la Pokédex de Nintendo DS.
+
 ## Índice
 
 - [Stack](#stack)
@@ -18,6 +20,7 @@ Aplicación web para explorar la Pokédex, con registro e inicio de sesión de u
 | --------------- | ----------------------------------- | ------------------------------------------------------------------------------------ |
 | Frontend        | React 19 + Vite + TypeScript        | Arranque rápido, recarga instantánea y tipado                                        |
 | Estilos         | Tailwind CSS v4                     | Clases utilitarias directamente en los componentes, sin archivos CSS aparte          |
+| Tipografía      | DotGothic16 + Pixelify Sans         | Fuentes pixeladas incluidas en el build con Fontsource, sin depender de Google Fonts |
 | Enrutado        | React Router v7                     | Rutas protegidas y públicas declaradas en un solo lugar                              |
 | HTTP (cliente)  | Axios                               | Interceptores para adjuntar el token y renovar la sesión automáticamente             |
 | Backend         | Node.js 22 + Express 5 + TypeScript | Express 5 propaga los errores de funciones `async` al manejador central              |
@@ -110,12 +113,12 @@ PokeDex-Manager/
 │   └── types/               Contrato de la API y formas de las respuestas de PokéAPI
 └── frontend/src/
     ├── api/                 Cliente Axios (token + renovación automática) y llamadas
-    ├── context/, hooks/     Estado de la sesión (AuthProvider, useAuth)
-    ├── pages/               Login, registro e inicio
+    ├── context/, hooks/     Estado de la sesión y carga de datos (listado, ficha, tipos)
+    ├── pages/               Login, registro, listado de Pokémon y ficha de detalle
     ├── layouts/             Estructura de las pantallas públicas y privadas
-    ├── components/          Campos de formulario, diálogos, rutas protegidas, etc.
-    ├── types/               Tipos compartidos
-    └── utils/               Validación de formularios
+    ├── components/          Tarjetas, filtros, paginación, ficha, campos de formulario, diálogos, etc.
+    ├── types/               Tipos compartidos (mismo contrato que el backend)
+    └── utils/               Validación de formularios y formato de nombres, números y medidas
 ```
 
 El backend sigue una arquitectura por capas: **rutas → controladores → servicios → clientes/modelos**. Los controladores no contienen lógica de negocio y los servicios no hablan con Express.
@@ -148,7 +151,11 @@ Todas requieren `Authorization: Bearer <accessToken>`.
 | GET    | `/api/pokemon?page=&limit=&type=`              | Listado paginado. `page` ≥ 1 (por defecto 1), `limit` 1–50 (por defecto 20), `type` opcional          |
 | GET    | `/api/pokemon/search?name=&page=&limit=&type=` | Búsqueda parcial por nombre, sin distinguir mayúsculas. Primero los que empiezan por el texto buscado |
 | GET    | `/api/pokemon/types`                           | Tipos disponibles: `[{ name: "fire", label: "Fuego" }, …]`                                            |
-| GET    | `/api/pokemon/:id`                             | Detalle por número de Pokédex o nombre exacto                                                         |
+| GET    | `/api/pokemon/:id`                             | Detalle por número de Pokédex o nombre exacto, con el Pokémon anterior y el siguiente                 |
+
+**Filtro por tipo:** `type` acepta uno o dos tipos separados por coma: `?type=fire,flying` devuelve solo los Pokémon que son de fuego **y** volador (Charizard, Moltres, Ho-Oh…). El máximo es 2 porque ningún Pokémon tiene más de dos tipos.
+
+Los tipos se indican por su nombre interno en inglés (`fire`), no por su etiqueta en español ("Fuego"). Los repetidos se ignoran (`fire,fire` equivale a `fire`). Un tipo desconocido responde `400` con `Tipo de Pokémon desconocido: <tipo>`, y más de dos tipos responde `400` con el error de validación.
 
 Ejemplo de listado (`GET /api/pokemon?type=fire&limit=1`):
 
@@ -183,12 +190,16 @@ Ejemplo de detalle (`GET /api/pokemon/25`):
     "heightMeters": 0.4,
     "weightKg": 6,
     "abilities": [
-      { "name": "static", "isHidden": false },
-      { "name": "lightning-rod", "isHidden": true }
+      { "name": "static", "label": "Electricidad Estática", "isHidden": false },
+      { "name": "lightning-rod", "label": "Pararrayos", "isHidden": true }
     ]
-  }
+  },
+  "previous": { "id": 24, "name": "arbok", "sprite": "…/24.png" },
+  "next": { "id": 26, "name": "raichu", "sprite": "…/26.png" }
 }
 ```
+
+`previous` y `next` siguen el mismo orden que el listado: tras el #1025 continúan las formas alternativas (#10001 en adelante). Son `null` en el primero y el último.
 
 ### Otros
 
@@ -220,6 +231,11 @@ PokéAPI permite 100 solicitudes por minuto, así que el backend nunca pide lo m
 - **Tipos sin pedir el detalle de cada Pokémon:**
   - Cada `/type/{nombre}` devuelve todos los Pokémon de ese tipo. Con unas 20 llamadas se conocen los tipos de los 1351.
   - Los nombres de los tipos en español (ej. "Fuego") también vienen de PokéAPI.
+- **Habilidades en español:** el detalle pide cada `/ability/{nombre}` (también cacheado) para obtener su nombre traducido (ej. "Perspicacia").
+  - Si PokéAPI falla al pedir una habilidad, el detalle responde igual (`200`) con el identificador de PokéAPI como `label` (ej. `lightning-rod`), en vez de fallar entero. El fallo no se cachea, así que la siguiente solicitud vuelve a intentarlo.
+  - Por eso el Pokémon se cachea sin las etiquetas y estas se añaden en cada respuesta: si se cacheara el resultado ya combinado, un solo fallo dejaría el nombre sin traducir durante 24 h.
+- **Pokémon anterior y siguiente:** `previous` y `next` salen del índice completo que ya está en caché, así que no cuestan ninguna llamada extra a PokéAPI.
+- **Idioma de los nombres:** tipos y habilidades usan el nombre oficial en español de Latinoamérica (`es-419`), que a veces difiere del de España (`es`): "Pelea" en vez de "Lucha", "Insecto" en vez de "Bicho". Si no existe se usa `es`, luego el inglés y, por último, el nombre interno de PokéAPI.
 - **Sprites:** la URL de la imagen se construye a partir del id. El navegador la descarga directamente de GitHub, sin pasar por PokéAPI.
 - **Caché (`lru-cache`):**
   - Las entradas duran 24 horas, con un máximo de 2000.
@@ -230,6 +246,28 @@ PokéAPI permite 100 solicitudes por minuto, así que el backend nunca pide lo m
 - **Datos desactualizados:** PokéAPI no ofrece notificaciones de cambios y sus datos cambian rara vez (sobre todo con juegos nuevos), así que un retraso de hasta 24 h es aceptable. Reiniciar el servidor vacía el caché.
 - **Seguridad:** el parámetro `:id` solo acepta letras, números y guiones, para que nadie pueda usar el proxy para llamar a otras rutas de PokéAPI.
 - **URLs de PokéAPI:** el frontend nunca llama a PokéAPI directamente. La `url` que devuelve PokéAPI se transforma en `id` y `sprite`, y el detalle se pide a nuestro backend.
+
+### Interfaz (frontend)
+
+- **Diseño:** inspirado en las Pokédex de Nintendo DS, sin usar recursos del juego. La Poké Ball, la Super Ball y el lápiz son pixel art propio en SVG y los marcos, etiquetas de tipo y formas inclinadas son CSS.
+- **Paleta (regla 60-30-10):** celeste para el fondo y la información, azul marino para los marcos, gris carbón para los botones (todo lo que se pulsa) y rojo solo como acento (barra superior, foco y Poké Ball).
+- **Accesibilidad:**
+  - Contraste WCAG AA comprobado en todos los textos, incluidas las etiquetas de tipo.
+  - Foco de teclado visible en cualquier fondo (anillo blanco y contorno rojo).
+  - Sin animaciones si el sistema pide reducir movimiento.
+  - Objetivos táctiles de al menos 24 px y texto real en lugar de imágenes de texto. Por eso las etiquetas de tipo son propias y no los iconos de PokéAPI, que además solo están en inglés.
+- **Tipografía:** DotGothic16 está dibujada sobre una cuadrícula de 16 px, así que se usa a 16 o 32 px para que se vea nítida. La única excepción es el título de la barra superior en móvil, a 18 px: es lo más grande que cabe junto a "Cerrar sesión" en una pantalla de 360 px. Pixelify Sans se usa solo en las etiquetas de tipo.
+- **Barra superior:** el nombre de usuario aparece como una ficha de entrenador ("ENTRENADOR | nombre") con una Super Ball. En móvil solo se ve la Super Ball; al pulsarla, el nombre aparece en una burbuja.
+- **Paginación:**
+  - Números de página con huecos (`1 … 5 6 [7] 8 9 … 68`), siempre con la primera y la última, y botones de primera, anterior, siguiente y última página. La barra tiene siempre la misma cantidad de elementos, así no cambia de ancho al avanzar. En móvil se reduce a `1 … [7] … 68`.
+  - "Página [7] de 68" permite escribir un número y saltar con Enter o con "Ir", que solo se habilita mientras se edita. El campo acepta solo dígitos; 0 lleva a la primera página y un número mayor que el total, a la última. Salir del campo sin confirmar lo devuelve a la página actual.
+- **Estado en la URL:** página, búsqueda y tipos viven en la URL (`?name=char&type=fire,flying&page=2`), así recargar, volver atrás o compartir el enlace conserva los filtros.
+  - La búsqueda espera 300 ms tras la última tecla antes de pedir resultados.
+  - Mientras se escribe, se reemplaza la entrada del historial en vez de añadir una por letra.
+- **Volver al listado:** las páginas ya vistas y la lista de tipos se guardan en memoria. Al volver desde la ficha, el listado aparece al instante y `ScrollRestoration` (React Router) devuelve al usuario a la tarjeta que abrió.
+- **Carga de datos:** hooks propios con `useEffect` que ignoran respuestas obsoletas y mantienen visibles los datos anteriores mientras cargan los nuevos.
+- **Ficha del Pokémon:** desde tablet, todo el interior va inclinado con una sola transformación, para que las diagonales sean continuas, y el texto se endereza para leerse bien. En móvil la ficha es recta.
+- **Formato regional:** las medidas usan el formato numérico de México (`0.4 m`, `90.5 kg`) y la página declara `lang="es-MX"`.
 
 ### Otras decisiones
 

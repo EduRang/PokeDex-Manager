@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage, getErrorStatus } from "../api/errors";
 import { TextField } from "../components/TextField";
 import { AuthLayout } from "../layouts/AuthLayout";
+import { Button } from "../components/Button";
 import {
   hasErrors,
   validateLogin,
@@ -56,13 +57,12 @@ export function LoginPage() {
   return (
     <AuthLayout
       title="Iniciar sesión"
-      subtitle="Accede para gestionar tu colección de Pokémon"
       footer={
         <>
           ¿No tienes cuenta?{" "}
           <Link
             to="/register"
-            className="font-medium text-red-600 hover:underline"
+            className="text-blue-700 underline hover:text-blue-900"
           >
             Regístrate
           </Link>
@@ -73,7 +73,7 @@ export function LoginPage() {
         {formError && (
           <p
             role="alert"
-            className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+            className="rounded-sm border-2 border-dex-error bg-white px-3 py-2 text-dex-error"
           >
             {formError}
           </p>
@@ -99,13 +99,9 @@ export function LoginPage() {
           error={errors.password}
         />
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-2 rounded-lg bg-red-600 px-4 py-2.5 font-medium text-white transition hover:bg-red-700 disabled:opacity-60"
-        >
+        <Button type="submit" size="lg" disabled={submitting} className="mt-2">
           {submitting ? "Ingresando..." : "Iniciar sesión"}
-        </button>
+        </Button>
       </form>
     </AuthLayout>
   );

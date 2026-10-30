@@ -16,14 +16,14 @@ export function RequirementsHint({
 }: RequirementsHintProps) {
   return (
     <>
-      <p className="mb-1 font-medium">{title}</p>
+      <p className="mb-2 border-b-2 border-dex-edge pb-1.5">{title}</p>
       <ul className="flex flex-col gap-0.5">
         {requirements.map(({ label, isMet }) => {
           const met = isMet(value);
           return (
             <li
               key={label}
-              className={`flex items-center gap-2 ${met ? "text-emerald-300" : "text-slate-300"}`}
+              className={`flex items-center gap-2 ${met ? "text-green-700" : "text-dex-muted"}`}
             >
               <span aria-hidden="true">{met ? "✓" : "○"}</span>
               <span>
@@ -37,7 +37,7 @@ export function RequirementsHint({
         })}
       </ul>
       {note && (
-        <p className="mt-2 border-t border-slate-600 pt-2 text-slate-100">
+        <p className="mt-2 border-t-2 border-dex-edge pt-2 text-dex-muted">
           {note}
         </p>
       )}

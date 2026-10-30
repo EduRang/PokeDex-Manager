@@ -5,6 +5,7 @@ import { getErrorMessage, getErrorStatus } from "../api/errors";
 import { TextField } from "../components/TextField";
 import { RequirementsHint } from "../components/RequirementsHint";
 import { AuthLayout } from "../layouts/AuthLayout";
+import { Button } from "../components/Button";
 import {
   hasErrors,
   PASSWORD_REQUIREMENTS,
@@ -71,13 +72,12 @@ export function RegisterPage() {
   return (
     <AuthLayout
       title="Crear cuenta"
-      subtitle="Regístrate para empezar tu colección"
       footer={
         <>
           ¿Ya tienes cuenta?{" "}
           <Link
             to="/login"
-            className="font-medium text-red-600 hover:underline"
+            className="text-blue-700 underline hover:text-blue-900"
           >
             Inicia sesión
           </Link>
@@ -88,7 +88,7 @@ export function RegisterPage() {
         {formError && (
           <p
             role="alert"
-            className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+            className="rounded-sm border-2 border-dex-error bg-white px-3 py-2 text-dex-error"
           >
             {formError}
           </p>
@@ -145,13 +145,9 @@ export function RegisterPage() {
           error={errors.confirmPassword}
         />
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-2 rounded-lg bg-red-600 px-4 py-2.5 font-medium text-white transition hover:bg-red-700 disabled:opacity-60"
-        >
+        <Button type="submit" size="lg" disabled={submitting} className="mt-2">
           {submitting ? "Creando cuenta..." : "Crear cuenta"}
-        </button>
+        </Button>
       </form>
     </AuthLayout>
   );

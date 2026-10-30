@@ -1,1 +1,72 @@
 @import "tailwindcss";
+
+@theme {
+  /* DotGothic16 para toda la interfaz; Pixelify Sans (font-display) solo
+     para las etiquetas de tipo, que nunca llevan números */
+  --font-sans: "DotGothic16", ui-monospace, monospace;
+  --font-display: "Pixelify Sans", ui-monospace, monospace;
+
+  --text-dex-lg: 2rem;
+  --text-dex-lg--line-height: 1.2;
+
+  --color-dex-bg: #9dd6f0;
+  --color-dex-grid: #82c6e6;
+  --color-dex-frame: #3e4c66;
+  --color-dex-frame-dark: #2a3448;
+  --color-dex-panel: #d6f2fc;
+  --color-dex-edge: #93d4ee;
+  --color-dex-hi: #f2fbff;
+  --color-dex-text: #2b3445;
+  --color-dex-muted: #4a5873;
+  --color-dex-ink: #252b37;
+  --color-dex-ink-dark: #12161e;
+  --color-dex-select: #1e4f78;
+  --color-dex-cell: #e3eaf2;
+  --color-dex-accent: #c8323a;
+  --color-dex-accent-dark: #8f1f26;
+  --color-dex-error: #b42318;
+
+  /* Balanceo de la Poké Ball tras ser lanzada */
+  --animate-wobble: wobble 1s ease-in-out infinite;
+  @keyframes wobble {
+    0%,
+    50%,
+    100% {
+      transform: rotate(0deg);
+    }
+    15% {
+      transform: rotate(-18deg);
+    }
+    35% {
+      transform: rotate(18deg);
+    }
+  }
+}
+
+@utility pixel-shadow {
+  text-shadow: 2px 2px 0 rgb(0 0 0 / 0.12);
+}
+
+@utility pixel-shadow-dark {
+  text-shadow: 2px 2px 0 var(--color-dex-frame-dark);
+}
+
+@utility pixel-shadow-ink {
+  text-shadow: 2px 2px 0 #000;
+}
+
+@utility pixel-shadow-accent {
+  text-shadow: 2px 2px 0 var(--color-dex-accent-dark);
+}
+
+@layer base {
+  body {
+    color: var(--color-dex-text);
+    background-color: var(--color-dex-bg);
+    /* Fondo tipo cuadrícula */
+    background-image:
+      linear-gradient(var(--color-dex-grid) 2px, transparent 2px),
+      linear-gradient(90deg, var(--color-dex-grid) 2px, transparent 2px);
+    background-size: 32px 32px;
+  }
+}

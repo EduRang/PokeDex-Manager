@@ -1,14 +1,18 @@
 import { env } from "../config/env.js";
 import { HttpError } from "../errors/HttpError.js";
 import type {
+  PokeApiAbility,
+  PokeApiLocalizedName,
   PokeApiPokemon,
   PokeApiResourceList,
   PokeApiType,
 } from "../types/pokeapi.js";
 import type {
   Pagination,
+  PokemonAbility,
   PokemonDetail,
   PokemonListItem,
+  PokemonNeighbors,
   PokemonPage,
   PokemonSummary,
   PokemonType,
@@ -19,8 +23,26 @@ import { pokeApiGet } from "../clients/pokeapi.client.js";
 const FULL_INDEX_LIMIT = 3000;
 // Igual que arriba, se piden todos con una sola request
 const TYPE_LIST_LIMIT = 100;
+// Español latinoamericano primero ("Pelea", "Insecto").
+// No todos los nombres lo tienen, así que se recurre al de España y luego al inglés
+const NAME_LANGUAGES = ["es-419", "es", "en"];
 
-function toPokemonDetail(raw: PokeApiPokemon): PokemonDetail {
+function toLocalizedName(
+  names: PokeApiLocalizedName[],
+  fallback: string,
+): string {
+  for (const language of NAME_LANGUAGES) {
+    const match = names.find((n) => n.language.name === language);
+    if (match) return match.name;
+  }
+  return fallback;
+}
+
+interface CachedPokemonDetail extends Omit<PokemonDetail, "abilities"> {
+  abilities: Omit<PokemonAbility, "label">[];
+}
+
+function toPokemonDetail(raw: PokeApiPokemon): CachedPokemonDetail {
   return {
     id: raw.id,
     name: raw.name,
@@ -46,6 +68,11 @@ function toPokemonSummaries(raw: PokeApiResourceList): PokemonSummary[] {
   });
 }
 
+// Nombre en español para la interfaz ("overgrow" -> "Espesura")
+function toAbilityLabel(raw: PokeApiAbility): string {
+  return toLocalizedName(raw.names, raw.name);
+}
+
 /** Busca por número de Pokédex o por nombre exacto. */
 export async function getPokemonDetail(
   idOrName: string,
@@ -54,7 +81,32 @@ export async function getPokemonDetail(
   if (!pokemon) {
     throw new HttpError(404, "Pokémon no encontrado");
   }
-  return pokemon;
+  const labels = await Promise.all(
+    pokemon.abilities.map((ability) =>
+      pokeApiGet(`/ability/${ability.name}`, toAbilityLabel).catch(() => null),
+    ),
+  );
+  return {
+    ...pokemon,
+    abilities: pokemon.abilities.map((ability, index) => ({
+      ...ability,
+      label: labels[index] ?? ability.name,
+    })),
+  };
+}
+
+export async function getPokemonNeighbors(
+  id: number,
+): Promise<PokemonNeighbors> {
+  const index = await getPokemonIndex();
+  const position = index.findIndex((p) => p.id === id);
+  if (position === -1) {
+    return { previous: null, next: null };
+  }
+  return {
+    previous: index[position - 1] ?? null,
+    next: index[position + 1] ?? null,
+  };
 }
 
 // Índice completo (nombre + id) en una sola llamada cacheada
@@ -78,7 +130,7 @@ function toTypeInfo(raw: PokeApiType): TypeInfo {
   return {
     name: raw.name,
     // Nombre en español para la interfaz ("fire" -> "Fuego")
-    label: raw.names.find((n) => n.language.name === "es")?.name ?? raw.name,
+    label: toLocalizedName(raw.names, raw.name),
     pokemon: raw.pokemon.map((p) => ({ name: p.pokemon.name, slot: p.slot })),
   };
 }
@@ -135,7 +187,7 @@ function paginate(
 }
 
 interface ListQuery {
-  type?: string;
+  types: string[];
   page: number;
   limit: number;
 }
@@ -153,7 +205,7 @@ interface PokemonQuery extends ListQuery {
 // Name es optional porque: el listado no trae name, la búsqueda sí
 async function queryPokemon({
   name,
-  type,
+  types,
   page,
   limit,
 }: PokemonQuery): Promise<PokemonPage> {
@@ -167,11 +219,13 @@ async function queryPokemon({
     types: typesByPokemon.get(p.name) ?? [],
   }));
 
-  if (type) {
-    if (!typeInfos.some((t) => t.name === type)) {
-      throw new HttpError(400, `Tipo de Pokémon desconocido: ${type}`);
+  if (types.length > 0) {
+    const unknown = types.find((t) => !typeInfos.some((i) => i.name === t));
+    if (unknown) {
+      throw new HttpError(400, `Tipo de Pokémon desconocido: ${unknown}`);
     }
-    items = items.filter((p) => p.types.includes(type));
+    // El Pokémon debe tener todos los tipos elegidos
+    items = items.filter((p) => types.every((t) => p.types.includes(t)));
   }
 
   if (name) {
