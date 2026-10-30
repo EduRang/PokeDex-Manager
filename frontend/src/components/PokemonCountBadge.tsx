@@ -6,13 +6,10 @@ const TAB_SHAPE =
 
 interface PokemonCountBadgeProps {
   total: number;
-  filtered?: boolean; // Con filtros activos dice "encontrados" en vez de "en total"
+  label: string; // "Pokémon en total", "Pokémon encontrados", "Pokémon capturados"
 }
 
-export function PokemonCountBadge({
-  total,
-  filtered = false,
-}: PokemonCountBadgeProps) {
+export function PokemonCountBadge({ total, label }: PokemonCountBadgeProps) {
   return (
     <div className="w-fit max-w-full drop-shadow-[0_3px_0_rgb(0_0_0/0.25)]">
       <div style={{ clipPath: TAB_SHAPE }} className="bg-dex-frame-dark p-0.5">
@@ -26,9 +23,7 @@ export function PokemonCountBadge({
             className="h-8 w-8 shrink-0 sm:h-9 sm:w-9"
           />
           <span className="text-dex-lg font-bold">{total}</span>
-          <span className="leading-tight uppercase">
-            {filtered ? "Pokémon encontrados" : "Pokémon en total"}
-          </span>
+          <span className="leading-tight uppercase">{label}</span>
         </p>
       </div>
     </div>

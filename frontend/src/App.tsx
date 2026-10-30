@@ -12,6 +12,7 @@ import { ProtectedRoute, PublicOnlyRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./layouts/AppLayout";
 import { PokemonListPage } from "./pages/PokemonListPage";
 import { PokemonDetailPage } from "./pages/PokemonDetailPage";
+import { CollectionPage } from "./pages/CollectionPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 
@@ -37,6 +38,7 @@ const router = createBrowserRouter(
         <Route element={<AppLayout />}>
           <Route path="/" element={<PokemonListPage />} />
           <Route path="/pokemon/:id" element={<PokemonDetailPage />} />
+          <Route path="/collection" element={<CollectionPage />} />
         </Route>
       </Route>
 

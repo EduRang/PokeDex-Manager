@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Button } from "./Button";
 import { Panel } from "./Panel";
 
@@ -26,6 +26,8 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // Id único: puede haber varios diálogos en la misma página
+  const titleId = useId();
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -37,7 +39,7 @@ export function ConfirmDialog({
   return (
     <dialog
       ref={dialogRef}
-      aria-labelledby="confirm-dialog-title"
+      aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
         if (!loading) onCancel();
@@ -47,10 +49,7 @@ export function ConfirmDialog({
       }}
       className="m-auto w-[calc(100%-2rem)] max-w-sm overflow-visible bg-transparent p-0 backdrop:bg-dex-frame-dark/60"
     >
-      <Panel
-        contentClassName="p-5"
-        header={<h2 id="confirm-dialog-title">{title}</h2>}
-      >
+      <Panel contentClassName="p-5" header={<h2 id={titleId}>{title}</h2>}>
         <p>{message}</p>
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

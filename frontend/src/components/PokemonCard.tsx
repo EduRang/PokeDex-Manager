@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { PokemonListItem } from "../types/pokemon";
+import type { DetailLinkState } from "../utils/navigation";
 import { formatPokemonName, formatPokemonNumber } from "../utils/format";
 import { TypeBadge } from "./TypeBadge";
 
 interface PokemonCardProps {
   pokemon: PokemonListItem;
   typeLabels: Record<string, string>;
+  linkState?: DetailLinkState; // Desde dónde se abre la ficha, si no es la Pokédex
 }
 
-export function PokemonCard({ pokemon, typeLabels }: PokemonCardProps) {
+export function PokemonCard({
+  pokemon,
+  typeLabels,
+  linkState,
+}: PokemonCardProps) {
   const [spriteLoaded, setSpriteLoaded] = useState(false);
   const [spriteFailed, setSpriteFailed] = useState(false);
 
@@ -18,6 +24,7 @@ export function PokemonCard({ pokemon, typeLabels }: PokemonCardProps) {
     // Al pasar el ratón se eleva un poco con una sombra más profunda. Al pulsarla se hunde y encoge un poco
     <Link
       to={`/pokemon/${pokemon.id}`}
+      state={linkState}
       className="flex h-full flex-col gap-1 rounded-md border-2 border-dex-frame-dark bg-dex-frame p-1 shadow-[0_3px_0_0_rgb(0_0_0/0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_0_0_rgb(0_0_0/0.25)] active:translate-y-0.5 active:scale-[0.97] active:shadow-[0_1px_0_0_rgb(0_0_0/0.2)] active:duration-75 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-dex-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:translate-y-0 motion-reduce:active:scale-100"
     >
       {/* Recuadro blanco con cuadrícula suave */}

@@ -1,5 +1,4 @@
-import { useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useListFilters } from "../hooks/useListFilters";
 import { usePokemonList } from "../hooks/usePokemonList";
 import { usePokemonTypes } from "../hooks/usePokemonTypes";
 import { PokemonCard } from "../components/PokemonCard";
@@ -13,25 +12,17 @@ import type { PokemonPage } from "../types/pokemon";
 
 const PAGE_SIZE = 20;
 
-function parsePage(value: string | null): number {
-  const page = Number(value);
-  return Number.isInteger(page) && page >= 1 ? page : 1;
-}
-
-function parseTypes(value: string | null): string[] {
-  const types = (value ?? "").split(",").filter(Boolean);
-  return [...new Set(types)].slice(0, 2);
-}
-
-// Página, búsqueda y tipos viven en la URL (?name=char&type=fire,flying&page=2):
-// recargar, volver atrás o compartir el enlace conserva los filtros
 export function PokemonListPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const page = parsePage(searchParams.get("page"));
-  const name = searchParams.get("name")?.trim() ?? "";
-  // Hasta 2 tipos separados por coma (?type=fire,flying)
-  const selectedTypes = parseTypes(searchParams.get("type"));
-  const filtered = Boolean(name || selectedTypes.length);
+  const {
+    page,
+    name,
+    selectedTypes,
+    filtered,
+    handleNameChange,
+    handleTypesChange,
+    goToPage,
+    clearFilters,
+  } = useListFilters();
 
   const { data, error, loading, retry } = usePokemonList({
     page,
@@ -40,46 +31,6 @@ export function PokemonListPage() {
     name: name || undefined,
   });
   const { types, labels } = usePokemonTypes();
-
-  // Cambiar un filtro vuelve a la página 1
-  // Los valores vacíos se quitan de la URL para que quede limpia
-  const updateFilters = useCallback(
-    (changes: { name?: string; type?: string }, replace = false) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          for (const [key, value] of Object.entries(changes)) {
-            if (value) next.set(key, value);
-            else next.delete(key);
-          }
-          next.delete("page");
-          return next;
-        },
-        { replace },
-      );
-    },
-    [setSearchParams],
-  );
-
-  // Al escribir se reemplaza la entrada del historial en vez de añadir una
-  // nueva, para que "atrás" no recorra la búsqueda letra por letra
-  const handleNameChange = useCallback(
-    (newName: string) => updateFilters({ name: newName }, true),
-    [updateFilters],
-  );
-
-  function goToPage(newPage: number) {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (newPage === 1) next.delete("page");
-      else next.set("page", String(newPage));
-      return next;
-    });
-  }
-
-  function clearFilters() {
-    setSearchParams({});
-  }
 
   return (
     <section className="space-y-6">
@@ -90,7 +41,7 @@ export function PokemonListPage() {
         {data && (
           <PokemonCountBadge
             total={data.pagination.total}
-            filtered={filtered}
+            label={filtered ? "Pokémon encontrados" : "Pokémon en total"}
           />
         )}
         <PokemonFilters
@@ -99,9 +50,7 @@ export function PokemonListPage() {
           typeOptions={types}
           typeLabels={labels}
           onNameChange={handleNameChange}
-          onTypesChange={(newTypes) =>
-            updateFilters({ type: newTypes.join(",") })
-          }
+          onTypesChange={handleTypesChange}
           onClear={clearFilters}
           className="flex-1"
         />

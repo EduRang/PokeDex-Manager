@@ -59,12 +59,16 @@ function toPokemonDetail(raw: PokeApiPokemon): CachedPokemonDetail {
   };
 }
 
+// Los sprites siguen un patrón por id, así no hace falta pedir el detalle
+// de cada Pokémon solo para mostrar su imagen en el listado
+export function getSpriteUrl(id: number): string {
+  return `${env.POKEAPI_SPRITES_URL}/${id}.png`;
+}
+
 function toPokemonSummaries(raw: PokeApiResourceList): PokemonSummary[] {
   return raw.results.map((r) => {
     const id = Number(r.url.match(/\/(\d+)\/?$/)?.[1]);
-    // Los sprites siguen un patrón por id, así no hace falta pedir el detalle
-    // de cada Pokémon solo para mostrar su imagen en el listado
-    return { id, name: r.name, sprite: `${env.POKEAPI_SPRITES_URL}/${id}.png` };
+    return { id, name: r.name, sprite: getSpriteUrl(id) };
   });
 }
 
@@ -107,6 +111,23 @@ export async function getPokemonNeighbors(
     previous: index[position - 1] ?? null,
     next: index[position + 1] ?? null,
   };
+}
+
+// Nombre y tipos de un Pokémon a partir de los datos ya cacheados, sin pedir
+// su detalle a PokéAPI. Devuelve null si el número no existe
+export async function findPokemonById(
+  id: number,
+): Promise<PokemonListItem | null> {
+  const [index, typeInfos] = await Promise.all([
+    getPokemonIndex(),
+    getTypeInfos(),
+  ]);
+  const pokemon = index.find((p) => p.id === id);
+  if (!pokemon) {
+    return null;
+  }
+  const types = buildTypesByPokemon(typeInfos).get(pokemon.name) ?? [];
+  return { ...pokemon, types };
 }
 
 // Índice completo (nombre + id) en una sola llamada cacheada
