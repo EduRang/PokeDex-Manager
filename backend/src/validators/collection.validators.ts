@@ -1,10 +1,13 @@
 import { z } from "zod";
-import { pokemonListQuerySchema } from "./pokemon.validators.js";
+import {
+  pokemonListQuerySchema,
+  pokemonSearchQuerySchema,
+} from "./pokemon.validators.js";
 
-// Mismas reglas de paginación que el listado de Pokémon
-export const collectionListQuerySchema = pokemonListQuerySchema.pick({
-  page: true,
-  limit: true,
+// Mismas reglas que el listado y la búsqueda de la Pokédex (página, límite,
+// hasta 2 tipos y nombre), pero el nombre es opcional, sin él se lista todo
+export const collectionListQuerySchema = pokemonListQuerySchema.extend({
+  name: pokemonSearchQuerySchema.shape.name.optional(),
 });
 
 // Solo el número de Pokédex (no el nombre): es lo que se guarda en la colección

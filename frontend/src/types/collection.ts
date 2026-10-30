@@ -13,4 +13,6 @@ export interface CollectionPage {
 export interface CollectionListParams {
   page?: number;
   limit?: number;
+  name?: string; // Búsqueda parcial por nombre
+  type?: string; // Hasta 2 tipos separados por coma
 }

@@ -12,16 +12,21 @@ interface CollectionResult {
 // Igual que usePokemonList, pero sin caché de páginas: la colección cambia al
 // capturar o liberar, y una página cacheada mostraría por un momento un
 // Pokémon que ya se liberó
-export function useCollection({ page, limit }: CollectionListParams) {
+export function useCollection({
+  page,
+  limit,
+  name,
+  type,
+}: CollectionListParams) {
   const [reloadKey, setReloadKey] = useState(0);
-  const key = JSON.stringify([page, limit, reloadKey]);
+  const key = JSON.stringify([page, limit, name, type, reloadKey]);
   const [result, setResult] = useState<CollectionResult | null>(null);
 
   useEffect(() => {
-    // Si cambia la página antes de que llegue la respuesta, se ignora la anterior
+    // Si cambian los parámetros antes de que llegue la respuesta, se ignora la anterior
     let ignore = false;
 
-    getCollection({ page, limit })
+    getCollection({ page, limit, name, type })
       .then((data) => {
         if (!ignore) setResult({ key, data, error: null });
       })
@@ -38,9 +43,9 @@ export function useCollection({ page, limit }: CollectionListParams) {
     return () => {
       ignore = true;
     };
-  }, [key, page, limit]);
+  }, [key, page, limit, name, type]);
 
-  // Está cargando mientras el último resultado sea de otra página.
+  // Está cargando mientras el último resultado sea de otros parámetros.
   // Mientras tanto se siguen devolviendo los datos anteriores
   const loading = result?.key !== key;
 

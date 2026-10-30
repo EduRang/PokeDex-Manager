@@ -1,9 +1,10 @@
-import { useCallback, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 import { useCollection } from "../hooks/useCollection";
+import { useListFilters } from "../hooks/useListFilters";
 import { usePokemonTypes } from "../hooks/usePokemonTypes";
 import { PokemonCard } from "../components/PokemonCard";
 import { PokemonCountBadge } from "../components/PokemonCountBadge";
+import { PokemonFilters } from "../components/PokemonFilters";
 import { Pagination } from "../components/Pagination";
 import { Panel } from "../components/Panel";
 import { Spinner } from "../components/Spinner";
@@ -12,31 +13,28 @@ import type { CollectionPage as CollectionPageData } from "../types/collection";
 
 const PAGE_SIZE = 20;
 
-function parsePage(value: string | null): number {
-  const page = Number(value);
-  return Number.isInteger(page) && page >= 1 ? page : 1;
-}
-
-// La página vive en la URL (?page=2), igual que en la Pokédex
+// Búsqueda, tipos y página viven en la URL, igual que en la Pokédex
 export function CollectionPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const page = parsePage(searchParams.get("page"));
+  const {
+    page,
+    name,
+    selectedTypes,
+    filtered,
+    handleNameChange,
+    handleTypesChange,
+    goToPage,
+    clearFilters,
+  } = useListFilters();
+
   const { data, error, loading, retry } = useCollection({
     page,
     limit: PAGE_SIZE,
+    name: name || undefined,
+    type: selectedTypes.join(",") || undefined,
   });
-  const { labels } = usePokemonTypes();
+  const { types, labels } = usePokemonTypes();
 
-  const goToPage = useCallback(
-    (newPage: number, replace = false) => {
-      setSearchParams(newPage === 1 ? {} : { page: String(newPage) }, {
-        replace,
-      });
-    },
-    [setSearchParams],
-  );
-
-  // Si la página pedida quedó vacía pero la colección no (por ejemplo, tras
+  // Si la página pedida quedó vacía pero hay resultados (por ejemplo, tras
   // liberar el último Pokémon de la última página), se va a la nueva última.
   // replace evita que "atrás" vuelva a la página vacía y redirija otra vez
   const lastPage =
@@ -51,20 +49,34 @@ export function CollectionPage() {
     <section className="space-y-6">
       <h1 className="sr-only">Mi colección</h1>
 
-      {data && (
-        <PokemonCountBadge
-          total={data.pagination.total}
-          label="Pokémon capturados"
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+        {data && (
+          <PokemonCountBadge
+            total={data.pagination.total}
+            label={filtered ? "Pokémon encontrados" : "Pokémon capturados"}
+          />
+        )}
+        <PokemonFilters
+          name={name}
+          selectedTypes={selectedTypes}
+          typeOptions={types}
+          typeLabels={labels}
+          onNameChange={handleNameChange}
+          onTypesChange={handleTypesChange}
+          onClear={clearFilters}
+          className="flex-1"
         />
-      )}
+      </div>
 
       <CollectionResults
         data={data}
         error={error}
         loading={loading}
+        filtered={filtered}
         typeLabels={labels}
         onRetry={retry}
         onPageChange={goToPage}
+        onClearFilters={clearFilters}
       />
     </section>
   );
@@ -74,31 +86,41 @@ interface CollectionResultsProps {
   data: CollectionPageData | null;
   error: string | null;
   loading: boolean;
+  filtered: boolean;
   typeLabels: Record<string, string>;
   onRetry: () => void;
   onPageChange: (page: number) => void;
+  onClearFilters: () => void;
 }
 
+// Los filtros quedan siempre visibles; solo esta parte cambia según el estado
 function CollectionResults({
   data,
   error,
   loading,
+  filtered,
   typeLabels,
   onRetry,
   onPageChange,
+  onClearFilters,
 }: CollectionResultsProps) {
   if (error) {
     return (
       <Panel className="mx-auto max-w-md" contentClassName="p-6 text-center">
         <p>{error}</p>
-        <Button onClick={onRetry} className="mt-4">
-          Reintentar
-        </Button>
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <Button onClick={onRetry}>Reintentar</Button>
+          {filtered && (
+            <Button variant="secondary" onClick={onClearFilters}>
+              Limpiar filtros
+            </Button>
+          )}
+        </div>
       </Panel>
     );
   }
 
-  // Sin datos todavía, o página vacía de una colección que no lo está:
+  // Sin datos todavía, o página vacía con resultados en otras páginas:
   // CollectionPage está redirigiendo a la última página
   if (!data || (data.pokemon.length === 0 && data.pagination.total > 0)) {
     return (
@@ -111,7 +133,15 @@ function CollectionResults({
   const { pokemon, pagination } = data;
 
   if (pokemon.length === 0) {
-    return (
+    // Con filtros, ninguno coincide; sin filtros, la colección está vacía
+    return filtered ? (
+      <Panel className="mx-auto max-w-md" contentClassName="p-6 text-center">
+        <p>Ningún Pokémon de tu colección coincide con esos filtros.</p>
+        <Button onClick={onClearFilters} className="mt-4">
+          Limpiar filtros
+        </Button>
+      </Panel>
+    ) : (
       <Panel className="mx-auto max-w-md" contentClassName="p-6 text-center">
         <p>
           Todavía no has capturado ningún Pokémon. Abre la ficha de uno en la

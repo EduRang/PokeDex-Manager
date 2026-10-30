@@ -55,16 +55,31 @@ export async function isInCollection(
 interface CollectionQuery {
   page: number;
   limit: number;
+  name?: string;
+  types: string[];
+}
+
+// El texto del usuario va dentro de una expresión regular: se escapan sus
+// caracteres especiales para que se busque literalmente ("." no es "cualquiera")
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // Se lee solo desde MongoDB, sin depender de PokéAPI.
 // En orden de Pokédex, no en el orden de captura.
-// La paginación la hace la base de datos con el índice { user, pokemonId }
+// La paginación la hace la base de datos con el índice { user, pokemonId }.
+// Filtros, igual que en la Pokédex:
+// - name: el nombre contiene el texto (los nombres se guardan en minúsculas)
+// - types: el Pokémon tiene todos los tipos elegidos
 export async function listCollection(
   userId: string,
-  { page, limit }: CollectionQuery,
+  { page, limit, name, types }: CollectionQuery,
 ): Promise<CollectionPage> {
-  const filter = { user: userId };
+  const filter = {
+    user: userId,
+    ...(name && { name: { $regex: escapeRegExp(name) } }),
+    ...(types.length > 0 && { types: { $all: types } }),
+  };
   const [entries, total] = await Promise.all([
     CollectionEntryModel.find(filter)
       .sort({ pokemonId: 1 })

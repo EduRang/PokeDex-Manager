@@ -9,9 +9,10 @@ import {
   removeFromCollection,
 } from "../services/collection.service.js";
 
+// Como en la Pokédex: el parámetro "type" llega validado como lista de tipos
 export async function getCollection(req: Request, res: Response) {
-  const query = collectionListQuerySchema.parse(req.query);
-  res.json(await listCollection(req.userId!, query));
+  const { type, ...query } = collectionListQuerySchema.parse(req.query);
+  res.json(await listCollection(req.userId!, { ...query, types: type }));
 }
 
 // PUT es idempotente: 201 si se añadió, 204 si ya estaba
