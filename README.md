@@ -9,6 +9,7 @@ En el frontend se puede recorrer la Pokédex página a página, buscar por nombr
 - [Stack](#stack)
 - [Requisitos](#requisitos)
 - [Instalación y ejecución](#instalación-y-ejecución)
+- [Datos de prueba](#datos-de-prueba)
 - [Variables de entorno](#variables-de-entorno)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [API](#api)
@@ -46,6 +47,7 @@ docker compose up -d
 cd backend
 cp .env.example .env      # y cambiar JWT_SECRET por una cadena aleatoria larga
 npm install
+npm run db:seed           # opcional: usuarios de prueba (ver "Datos de prueba")
 npm run dev
 
 # 3. Frontend (http://localhost:5173), en otra terminal
@@ -69,8 +71,28 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | -------- | ----------------------------- | ------------------------------------------------ |
 | backend  | `npm run build` / `npm start` | Compila a `dist/` y ejecuta la versión compilada |
 | backend  | `npm run typecheck`           | Comprueba los tipos sin compilar                 |
+| backend  | `npm run db:seed`             | Carga los usuarios de prueba y sus colecciones   |
+| backend  | `npm run db:clean`            | Vacía la base de datos (no en producción)        |
+| backend  | `npm run db:reset`            | `db:clean` y después `db:seed`                   |
 | frontend | `npm run build`               | Compila para producción                          |
 | frontend | `npm run lint`                | Revisa el código con oxlint                      |
+
+## Datos de prueba
+
+`npm run db:seed` (en `backend/`) crea tres usuarios con su colección de Pokémon, para probar la aplicación sin registrarse:
+
+| Usuario | Correo               | Contraseña       | Colección                                                                |
+| ------- | -------------------- | ---------------- | ------------------------------------------------------------------------ |
+| `red`   | `red@pokedex.test`   | `Charizard#2026` | 50 Pokémon de los 18 tipos (3 páginas): paginación, búsqueda y filtros   |
+| `ash`   | `ash@pokedex.test`   | `Pikachu#2026`   | 25 Pokémon (2 páginas)                                                   |
+| `misty` | `misty@pokedex.test` | `Starmie#2026`   | 10 Pokémon de tipo agua, algunos con un segundo tipo: búsqueda y filtros |
+
+Se puede iniciar sesión con el usuario o con el correo. Algunas búsquedas para probar con `red`: `char` (Charmander, Charmeleon, Charizard), `eon` (Charmeleon y las evoluciones de Eevee) o los tipos fuego + volador (Charizard, Moltres, Ho-Oh).
+
+- **Requisitos:** MongoDB en marcha y `backend/.env` configurado, igual que para el servidor. También necesita internet: cada Pokémon se añade con el mismo servicio que el botón "Capturar", que comprueba que existe y copia su nombre y tipos de PokéAPI.
+- **Usa los servicios de la aplicación:** las contraseñas pasan las mismas reglas que el registro y se guardan con bcrypt, así que los datos de prueba son iguales a los que crearía un usuario.
+- **Se puede repetir:** solo borra y vuelve a crear sus propios tres usuarios (con sus colecciones y sesiones). Los demás datos no se tocan.
+- **Empezar de cero:** `npm run db:clean` vacía usuarios, sesiones y colecciones, y sincroniza los índices con los modelos (crea los que falten y borra los obsoletos), así la base de datos queda igual que recién creada. No vacía la base de datos entera para no perder los índices únicos ni el TTL mientras el servidor está en marcha. Se niega a ejecutarse con `NODE_ENV=production`. `npm run db:reset` lo combina con `db:seed`.
 
 ## Variables de entorno
 
@@ -111,6 +133,7 @@ PokeDex-Manager/
 │   ├── models/              Modelos de Mongoose (CollectionEntry, RefreshToken, User)
 │   ├── middlewares/         requireAuth, manejo central de errores y 404
 │   ├── errors/              HttpError y utilidades de errores de MongoDB
+│   ├── scripts/db/          Scripts que se ejecutan aparte del servidor: datos de prueba y limpieza
 │   └── types/               Contrato de la API y formas de las respuestas de PokéAPI
 └── frontend/src/
     ├── api/                 Cliente Axios (token + renovación automática) y llamadas
@@ -251,7 +274,7 @@ Ejemplo (`GET /api/collection?type=fire&limit=2`):
 
 ## Base de datos
 
-MongoDB guarda solo los datos propios de la aplicación: usuarios, sesiones y colecciones. Los datos de los Pokémon vienen de PokéAPI y se cachean en memoria. Los índices los crea Mongoose al arrancar el servidor.
+MongoDB guarda solo los datos propios de la aplicación: usuarios, sesiones y colecciones. Los datos de los Pokémon vienen de PokéAPI y se cachean en memoria. Los índices los crea Mongoose al arrancar el servidor. Para cargar datos de prueba, ver [Datos de prueba](#datos-de-prueba).
 
 ### `users`
 
