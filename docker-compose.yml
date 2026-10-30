@@ -1,3 +1,6 @@
+# Toda la aplicación en local: MongoDB, backend y frontend.
+# Antes de la primera vez: node scripts/init-env.mjs (crea el .env con JWT_SECRET)
+# Para desarrollar con npm run dev basta con la base de datos: docker compose up -d mongo
 services:
   mongo:
     image: mongo:8.0
@@ -7,6 +10,49 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    # El backend espera a que MongoDB responda, porque sin base de datos no arranca
+    healthcheck:
+      test:
+        ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    build: ./backend
+    container_name: pokedex-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      MONGO_URI: mongodb://mongo:27017/pokedex
+      # Obligatorio: sin él compose no arranca
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET no está definido. Ejecuta node scripts/init-env.mjs}
+      CLIENT_URL: http://localhost:5173
+      # En local todo va por http://: solo se relaja Secure, el resto de
+      # protecciones de la cookie (SameSite=Strict, httpOnly) se mantienen
+      COOKIE_SECURE: "false"
+      COOKIE_SAMESITE: strict
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Se escribe en el código al compilar: es la URL que usa el navegador
+        VITE_API_URL: http://localhost:5000
+    container_name: pokedex-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    # Mismo puerto que npm run dev (Vite), así la URL de la aplicación es la
+    # misma en los dos modos. Dentro del contenedor NGINX escucha en el 8080
+    ports:
+      - "5173:8080"
 
 volumes:
   mongo-data:
