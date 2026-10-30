@@ -12,12 +12,13 @@ import { HttpError } from "../errors/HttpError.js";
 
 const REFRESH_COOKIE = "refreshToken";
 
-const isProduction = env.NODE_ENV === "production";
-
+// Secure y SameSite vienen de la configuración (COOKIE_SECURE y COOKIE_SAMESITE)
+// y no de NODE_ENV: así un despliegue de producción puede elegir según dónde
+// estén el frontend y el backend, y en local basta con relajar solo Secure
 const refreshCookieOptions: CookieOptions = {
   httpOnly: true, // JavaScript no puede leerla
-  secure: isProduction,
-  sameSite: isProduction ? "none" : "lax",
+  secure: env.COOKIE_SECURE, // solo por HTTPS
+  sameSite: env.COOKIE_SAMESITE, // no se envía desde otros sitios (CSRF)
   path: "/api/auth", // solo se envía a los endpoints de auth
 };
 

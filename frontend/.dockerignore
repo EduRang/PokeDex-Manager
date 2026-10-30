@@ -1,0 +1,9 @@
+# Se instalan y compilan dentro de la imagen
+node_modules
+dist
+
+# La URL del backend llega como argumento de construcción (VITE_API_URL)
+.env
+.env.*
+
+*.log
