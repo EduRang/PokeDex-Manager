@@ -109,6 +109,23 @@ export async function getPokemonNeighbors(
   };
 }
 
+// Nombre y tipos de un Pokémon a partir de los datos ya cacheados, sin pedir
+// su detalle a PokéAPI. Devuelve null si el número no existe
+export async function findPokemonById(
+  id: number,
+): Promise<PokemonListItem | null> {
+  const [index, typeInfos] = await Promise.all([
+    getPokemonIndex(),
+    getTypeInfos(),
+  ]);
+  const pokemon = index.find((p) => p.id === id);
+  if (!pokemon) {
+    return null;
+  }
+  const types = buildTypesByPokemon(typeInfos).get(pokemon.name) ?? [];
+  return { ...pokemon, types };
+}
+
 // Índice completo (nombre + id) en una sola llamada cacheada
 // Paginar sobre él en memoria evita pedir a PokéAPI una página distinta cada vez
 async function getPokemonIndex(): Promise<PokemonSummary[]> {

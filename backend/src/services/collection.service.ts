@@ -1,0 +1,43 @@
+import { CollectionEntryModel } from "../models/CollectionEntry.js";
+import { HttpError } from "../errors/HttpError.js";
+import { isDuplicateKeyError } from "../errors/mongoErrors.js";
+import { findPokemonById } from "./pokemon.service.js";
+
+/**
+ * Añade un Pokémon a la colección del usuario, con una copia de su nombre y
+ * tipos. Devuelve false si ya estaba (añadirlo otra vez no es un error).
+ */
+export async function addToCollection(
+  userId: string,
+  pokemonId: number,
+): Promise<boolean> {
+  const pokemon = await findPokemonById(pokemonId);
+  if (!pokemon) {
+    throw new HttpError(404, "Pokémon no encontrado");
+  }
+
+  // El índice único detecta si ya estaba, sin una consulta previa:
+  // así dos solicitudes simultáneas no pueden añadirlo dos veces
+  try {
+    await CollectionEntryModel.create({
+      user: userId,
+      pokemonId,
+      name: pokemon.name,
+      types: pokemon.types,
+    });
+    return true;
+  } catch (err) {
+    if (isDuplicateKeyError(err)) {
+      return false;
+    }
+    throw err;
+  }
+}
+
+// Quitar uno que no estaba tampoco es un error
+export async function removeFromCollection(
+  userId: string,
+  pokemonId: number,
+): Promise<void> {
+  await CollectionEntryModel.deleteOne({ user: userId, pokemonId });
+}
