@@ -10,3 +10,13 @@ export function formatPokemonName(name: string): string {
 export function formatPokemonNumber(id: number): string {
   return `#${String(id).padStart(4, "0")}`;
 }
+
+// Formato numérico mexicano (es-MX), con hasta un decimal: 0.4 -> "0.4", 6 -> "6"
+const decimalFormat = new Intl.NumberFormat("es-MX", {
+  maximumFractionDigits: 1,
+});
+
+// (0.4, "m") -> "0.4 m"
+export function formatMeasure(value: number, unit: string): string {
+  return `${decimalFormat.format(value)} ${unit}`;
+}

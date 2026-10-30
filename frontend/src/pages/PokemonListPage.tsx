@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { usePokemonList } from "../hooks/usePokemonList";
 import { usePokemonTypes } from "../hooks/usePokemonTypes";
@@ -40,10 +40,6 @@ export function PokemonListPage() {
     name: name || undefined,
   });
   const { types, labels } = usePokemonTypes();
-
-  useEffect(() => {
-    window.scrollTo({ top: 0 });
-  }, [page]);
 
   // Cambiar un filtro vuelve a la página 1
   // Los valores vacíos se quitan de la URL para que quede limpia
