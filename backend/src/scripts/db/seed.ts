@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import { env } from "../config/env.js";
-import { connectDB } from "../config/db.js";
-import { UserModel } from "../models/User.js";
-import { RefreshTokenModel } from "../models/RefreshToken.js";
-import { CollectionEntryModel } from "../models/CollectionEntry.js";
-import { registerSchema } from "../validators/auth.validators.js";
-import { registerUser } from "../services/auth.service.js";
-import { addToCollection } from "../services/collection.service.js";
+import { env } from "../../config/env.js";
+import { connectDB } from "../../config/db.js";
+import { UserModel } from "../../models/User.js";
+import { RefreshTokenModel } from "../../models/RefreshToken.js";
+import { CollectionEntryModel } from "../../models/CollectionEntry.js";
+import { registerSchema } from "../../validators/auth.validators.js";
+import { registerUser } from "../../services/auth.service.js";
+import { addToCollection } from "../../services/collection.service.js";
 
 // Datos de prueba: usuarios con contraseña conocida y una colección cada uno.
 // Se usan los mismos servicios que la aplicación, así que:
