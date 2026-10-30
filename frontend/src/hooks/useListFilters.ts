@@ -1,6 +1,9 @@
 import { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 
+// Pokémon por página en la Pokédex y en "Mi colección"
+export const PAGE_SIZE = 20;
+
 function parsePage(value: string | null): number {
   const page = Number(value);
   return Number.isInteger(page) && page >= 1 ? page : 1;

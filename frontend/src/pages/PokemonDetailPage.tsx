@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { usePokemonDetail } from "../hooks/usePokemonDetail";
 import { usePokemonTypes } from "../hooks/usePokemonTypes";
 import { Button, LinkButton } from "../components/Button";
-import { Panel } from "../components/Panel";
+import { MessagePanel } from "../components/Panel";
 import { CollectionToggle } from "../components/CollectionToggle";
 import {
   InfoRow,
@@ -14,7 +14,7 @@ import {
   Upright,
 } from "../components/InfoTable";
 import { PokemonStats } from "../components/PokemonStats";
-import { Spinner } from "../components/Spinner";
+import { SectionSpinner } from "../components/Spinner";
 import { TypeBadge } from "../components/TypeBadge";
 import {
   formatMeasure,
@@ -57,28 +57,24 @@ export function PokemonDetailPage() {
   let content: ReactNode;
   if (notFound) {
     content = (
-      <Panel className="mx-auto max-w-md" contentClassName="p-6 text-center">
+      <MessagePanel>
         <p>Pokémon no encontrado.</p>
         <Button onClick={() => navigate("/")} className="mt-4">
           Ir a la Pokédex
         </Button>
-      </Panel>
+      </MessagePanel>
     );
   } else if (error) {
     content = (
-      <Panel className="mx-auto max-w-md" contentClassName="p-6 text-center">
+      <MessagePanel>
         <p>{error}</p>
         <Button onClick={retry} className="mt-4">
           Reintentar
         </Button>
-      </Panel>
+      </MessagePanel>
     );
   } else if (!pokemon) {
-    content = (
-      <div className="flex justify-center py-20">
-        <Spinner />
-      </div>
-    );
+    content = <SectionSpinner />;
   } else {
     content = (
       <PokemonDetailView

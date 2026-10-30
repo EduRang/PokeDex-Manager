@@ -1,17 +1,14 @@
 import { useEffect } from "react";
 import { useCollection } from "../hooks/useCollection";
-import { useListFilters } from "../hooks/useListFilters";
+import { PAGE_SIZE, useListFilters } from "../hooks/useListFilters";
 import { usePokemonTypes } from "../hooks/usePokemonTypes";
-import { PokemonCard } from "../components/PokemonCard";
 import { PokemonCountBadge } from "../components/PokemonCountBadge";
 import { PokemonFilters } from "../components/PokemonFilters";
-import { Pagination } from "../components/Pagination";
-import { Panel } from "../components/Panel";
-import { Spinner } from "../components/Spinner";
+import { PokemonGrid, ResultsError } from "../components/PokemonResults";
+import { MessagePanel } from "../components/Panel";
+import { SectionSpinner } from "../components/Spinner";
 import { Button, LinkButton } from "../components/Button";
 import type { CollectionPage as CollectionPageData } from "../types/collection";
-
-const PAGE_SIZE = 20;
 
 // Búsqueda, tipos y página viven en la URL, igual que en la Pokédex
 export function CollectionPage() {
@@ -106,28 +103,19 @@ function CollectionResults({
 }: CollectionResultsProps) {
   if (error) {
     return (
-      <Panel className="mx-auto max-w-md" contentClassName="p-6 text-center">
-        <p>{error}</p>
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
-          <Button onClick={onRetry}>Reintentar</Button>
-          {filtered && (
-            <Button variant="secondary" onClick={onClearFilters}>
-              Limpiar filtros
-            </Button>
-          )}
-        </div>
-      </Panel>
+      <ResultsError
+        message={error}
+        filtered={filtered}
+        onRetry={onRetry}
+        onClearFilters={onClearFilters}
+      />
     );
   }
 
   // Sin datos todavía, o página vacía con resultados en otras páginas:
   // CollectionPage está redirigiendo a la última página
   if (!data || (data.pokemon.length === 0 && data.pagination.total > 0)) {
-    return (
-      <div className="flex justify-center py-20">
-        <Spinner />
-      </div>
-    );
+    return <SectionSpinner />;
   }
 
   const { pokemon, pagination } = data;
@@ -135,14 +123,14 @@ function CollectionResults({
   if (pokemon.length === 0) {
     // Con filtros, ninguno coincide; sin filtros, la colección está vacía
     return filtered ? (
-      <Panel className="mx-auto max-w-md" contentClassName="p-6 text-center">
+      <MessagePanel>
         <p>Ningún Pokémon de tu colección coincide con esos filtros.</p>
         <Button onClick={onClearFilters} className="mt-4">
           Limpiar filtros
         </Button>
-      </Panel>
+      </MessagePanel>
     ) : (
-      <Panel className="mx-auto max-w-md" contentClassName="p-6 text-center">
+      <MessagePanel>
         <p>
           Todavía no has capturado ningún Pokémon. Abre la ficha de uno en la
           Pokédex y pulsa <strong>Capturar</strong>.
@@ -150,35 +138,18 @@ function CollectionResults({
         <LinkButton to="/" className="mt-4">
           Ir a la Pokédex
         </LinkButton>
-      </Panel>
+      </MessagePanel>
     );
   }
 
   return (
-    <>
-      {/* Mientras carga otra página se mantiene la actual, semitransparente */}
-      <ul
-        aria-busy={loading}
-        className={`grid grid-cols-2 gap-4 transition-opacity sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 ${loading ? "opacity-50" : ""}`}
-      >
-        {pokemon.map((p) => (
-          <li key={p.id}>
-            <PokemonCard
-              pokemon={p}
-              typeLabels={typeLabels}
-              linkState={{ from: "collection" }}
-            />
-          </li>
-        ))}
-      </ul>
-
-      {pagination.totalPages > 1 && (
-        <Pagination
-          page={pagination.page}
-          totalPages={pagination.totalPages}
-          onPageChange={onPageChange}
-        />
-      )}
-    </>
+    <PokemonGrid
+      pokemon={pokemon}
+      pagination={pagination}
+      loading={loading}
+      typeLabels={typeLabels}
+      linkState={{ from: "collection" }}
+      onPageChange={onPageChange}
+    />
   );
 }
