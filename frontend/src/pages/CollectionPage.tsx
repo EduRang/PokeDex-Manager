@@ -53,7 +53,7 @@ export function CollectionPage() {
         {data && (
           <PokemonCountBadge
             total={data.pagination.total}
-            label={filtered ? "Pokémon encontrados" : "Pokémon capturados"}
+            label="Pokémon capturados"
           />
         )}
         <PokemonFilters
