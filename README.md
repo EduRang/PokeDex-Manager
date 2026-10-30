@@ -25,6 +25,7 @@ En el frontend se puede recorrer la Pokédex página a página, buscar por nombr
 | Tipografía      | DotGothic16 + Pixelify Sans         | Fuentes pixeladas incluidas en el build con Fontsource, sin depender de Google Fonts |
 | Enrutado        | React Router v7                     | Rutas protegidas y públicas declaradas en un solo lugar                              |
 | HTTP (cliente)  | Axios                               | Interceptores para adjuntar el token y renovar la sesión automáticamente             |
+| Avisos          | notistack                           | Cola de avisos flotantes con componente propio; no depende de Material UI            |
 | Backend         | Node.js 22 + Express 5 + TypeScript | Express 5 propaga los errores de funciones `async` al manejador central              |
 | Validación      | Zod 4 (mensajes en español)         | Un mismo esquema valida la entrada y genera el tipo de TypeScript                    |
 | Base de datos   | MongoDB 8 + Mongoose                | Esquemas, índices únicos y expiración automática (TTL) de documentos                 |
@@ -388,8 +389,12 @@ PokéAPI permite 100 solicitudes por minuto, así que el backend nunca pide lo m
   - La búsqueda espera 300 ms tras la última tecla antes de pedir resultados.
   - Mientras se escribe, se reemplaza la entrada del historial en vez de añadir una por letra.
 - **Volver al listado:** las páginas ya vistas y la lista de tipos se guardan en memoria. Al volver desde la ficha, el listado aparece al instante y `ScrollRestoration` (React Router) devuelve al usuario a la tarjeta que abrió.
-  - La colección no usa ese caché: cambia al capturar o liberar, y una página cacheada mostraría por un momento un Pokémon ya liberado. Además, el caché sobrevive a un cambio de sesión en la misma pestaña, y mostraría la colección del usuario anterior.
+  - "Mi colección" usa un caché igual, pero se vacía al capturar o liberar un Pokémon y al cerrarse la sesión: si no, mostraría por un momento un Pokémon ya liberado o la colección del usuario anterior. Una respuesta pedida antes de vaciarlo tampoco se guarda.
 - **Carga de datos:** hooks propios con `useEffect` que ignoran respuestas obsoletas y mantienen visibles los datos anteriores mientras cargan los nuevos.
+- **Errores:** cada uno se muestra donde ayuda a resolverlo.
+  - Acciones sin un sitio fijo en la pantalla (iniciar sesión o registrarse sin conexión, capturar, liberar): aviso flotante abajo en el centro, con notistack y un componente propio. Como mucho 3 a la vez, sin repetir el mismo mensaje, y se cierran solos a los 6 s o con su botón.
+  - Datos incorrectos del formulario (usuario o contraseña incorrectos, usuario ya registrado): en el propio formulario, porque es lo que hay que corregir.
+  - Cargas fallidas (Pokédex, colección, ficha): en lugar del contenido, con "Reintentar".
 - **Ficha del Pokémon:** desde tablet, todo el interior va inclinado con una sola transformación, para que las diagonales sean continuas, y el texto se endereza para leerse bien. En móvil la ficha es recta.
 - **Formato regional:** las medidas usan el formato numérico de México (`0.4 m`, `90.5 kg`) y la página declara `lang="es-MX"`.
 

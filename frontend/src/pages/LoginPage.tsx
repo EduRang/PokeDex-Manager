@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type SubmitEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage, getErrorStatus } from "../api/errors";
+import { showErrorToast } from "../utils/toast";
 import { TextField } from "../components/TextField";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { Button } from "../components/Button";
@@ -45,11 +46,12 @@ export function LoginPage() {
       await login(values);
       navigate(redirectTo, { replace: true });
     } catch (err) {
+      // Credenciales incorrectas: en el formulario, porque es lo que hay que corregir
+      // Otros fallos (sin conexión, servidor caído) usan el aviso flotante
       const rejected = getErrorStatus(err) === 401;
       setCredentialsRejected(rejected);
-      setFormError(
-        rejected ? "Usuario o contraseña incorrectos" : getErrorMessage(err),
-      );
+      if (rejected) setFormError("Usuario o contraseña incorrectos");
+      else showErrorToast(getErrorMessage(err));
       setSubmitting(false);
     }
   }

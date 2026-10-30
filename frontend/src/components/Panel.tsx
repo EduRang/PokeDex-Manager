@@ -31,3 +31,12 @@ export function Panel({
     </div>
   );
 }
+
+// Panel centrado para mensajes de estado: errores, sin resultados, no encontrado
+export function MessagePanel({ children }: { children: ReactNode }) {
+  return (
+    <Panel className="mx-auto max-w-md" contentClassName="p-6 text-center">
+      {children}
+    </Panel>
+  );
+}

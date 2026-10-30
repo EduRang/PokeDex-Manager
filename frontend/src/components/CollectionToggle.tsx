@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { addToCollection, removeFromCollection } from "../api/collection";
 import { getErrorMessage } from "../api/errors";
+import { clearCollectionCache } from "../hooks/useCollection";
+import { showErrorToast } from "../utils/toast";
 import { Button } from "./Button";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { PokeBallIcon } from "./PokeBallIcon";
@@ -26,20 +28,22 @@ export function CollectionToggle({
   const [inCollection, setInCollection] = useState(initialInCollection);
   const [saving, setSaving] = useState(false);
   const [confirmingRelease, setConfirmingRelease] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   // Se anuncia a lectores de pantalla cuando termina
   const [status, setStatus] = useState("");
 
   async function capture() {
     setSaving(true);
-    setError(null);
     setStatus("");
     try {
       await addToCollection(pokemonId);
+      // La colección cambió: las páginas cacheadas ya no sirven
+      clearCollectionCache();
       setInCollection(true);
       setStatus(`${pokemonName} se añadió a tu colección`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      showErrorToast(
+        `No se pudo capturar a ${pokemonName}. ${getErrorMessage(err)}`,
+      );
     } finally {
       setSaving(false);
     }
@@ -47,14 +51,16 @@ export function CollectionToggle({
 
   async function release() {
     setSaving(true);
-    setError(null);
     setStatus("");
     try {
       await removeFromCollection(pokemonId);
+      clearCollectionCache();
       setInCollection(false);
       setStatus(`${pokemonName} se quitó de tu colección`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      showErrorToast(
+        `No se pudo liberar a ${pokemonName}. ${getErrorMessage(err)}`,
+      );
     } finally {
       setSaving(false);
       setConfirmingRelease(false);
@@ -62,8 +68,6 @@ export function CollectionToggle({
   }
 
   return (
-    // Va en la esquina superior izquierda del recuadro: el error se muestra
-    // debajo, alineado a la izquierda
     <div className="flex flex-col items-start gap-2">
       {inCollection ? (
         <div className="flex items-stretch rounded border-2 border-dex-frame-dark bg-dex-frame-dark shadow-[0_3px_0_0_rgb(0_0_0/0.2)]">
@@ -106,14 +110,6 @@ export function CollectionToggle({
           />
           {saving ? "Capturando…" : "Capturar"}
         </Button>
-      )}
-      {error && (
-        <p
-          role="alert"
-          className="max-w-56 rounded-sm border-2 border-dex-error bg-white px-2 py-1 text-dex-error"
-        >
-          {error}
-        </p>
       )}
       <p aria-live="polite" className="sr-only">
         {status}
