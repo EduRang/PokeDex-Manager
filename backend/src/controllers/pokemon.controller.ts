@@ -6,6 +6,7 @@ import {
 } from "../validators/pokemon.validators.js";
 import {
   getPokemonDetail,
+  getPokemonNeighbors,
   listPokemon,
   listPokemonTypes,
   searchPokemon,
@@ -30,5 +31,6 @@ export async function getPokemonTypes(_req: Request, res: Response) {
 export async function getPokemon(req: Request, res: Response) {
   const { id } = pokemonIdParamSchema.parse(req.params);
   const pokemon = await getPokemonDetail(id);
-  res.json({ pokemon });
+  const neighbors = await getPokemonNeighbors(pokemon.id);
+  res.json({ pokemon, ...neighbors });
 }

@@ -9,6 +9,7 @@ import type {
   Pagination,
   PokemonDetail,
   PokemonListItem,
+  PokemonNeighbors,
   PokemonPage,
   PokemonSummary,
   PokemonType,
@@ -55,6 +56,20 @@ export async function getPokemonDetail(
     throw new HttpError(404, "Pokémon no encontrado");
   }
   return pokemon;
+}
+
+export async function getPokemonNeighbors(
+  id: number,
+): Promise<PokemonNeighbors> {
+  const index = await getPokemonIndex();
+  const position = index.findIndex((p) => p.id === id);
+  if (position === -1) {
+    return { previous: null, next: null };
+  }
+  return {
+    previous: index[position - 1] ?? null,
+    next: index[position + 1] ?? null,
+  };
 }
 
 // Índice completo (nombre + id) en una sola llamada cacheada

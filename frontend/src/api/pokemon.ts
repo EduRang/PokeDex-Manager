@@ -1,6 +1,6 @@
 import { api } from "./client";
 import type {
-  PokemonDetail,
+  PokemonDetailResponse,
   PokemonListParams,
   PokemonPage,
   PokemonSearchParams,
@@ -29,9 +29,9 @@ export async function getPokemonTypes(): Promise<PokemonType[]> {
 // Acepta número de Pokédex o nombre exacto
 export async function getPokemonDetail(
   idOrName: string | number,
-): Promise<PokemonDetail> {
-  const { data } = await api.get<{ pokemon: PokemonDetail }>(
+): Promise<PokemonDetailResponse> {
+  const { data } = await api.get<PokemonDetailResponse>(
     `/pokemon/${encodeURIComponent(idOrName)}`,
   );
-  return data.pokemon;
+  return data;
 }
