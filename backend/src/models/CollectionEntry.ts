@@ -32,8 +32,10 @@ const collectionEntrySchema = new Schema(
 
 // Un mismo Pokémon no puede estar dos veces en la colección de un usuario
 collectionEntrySchema.index({ user: 1, pokemonId: 1 }, { unique: true });
-// Listado de la colección: del más reciente al más antiguo, paginado
-collectionEntrySchema.index({ user: 1, createdAt: -1 });
+// Listado de la colección: del más reciente al más antiguo, paginado.
+// _id desempata los añadidos en el mismo milisegundo, para que el orden
+// sea estable entre páginas
+collectionEntrySchema.index({ user: 1, createdAt: -1, _id: -1 });
 
 export type CollectionEntry = InferSchemaType<typeof collectionEntrySchema>;
 

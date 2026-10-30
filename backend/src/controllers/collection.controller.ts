@@ -1,9 +1,18 @@
 import type { Request, Response } from "express";
-import { collectionPokemonParamSchema } from "../validators/collection.validators.js";
+import {
+  collectionListQuerySchema,
+  collectionPokemonParamSchema,
+} from "../validators/collection.validators.js";
 import {
   addToCollection,
+  listCollection,
   removeFromCollection,
 } from "../services/collection.service.js";
+
+export async function getCollection(req: Request, res: Response) {
+  const query = collectionListQuerySchema.parse(req.query);
+  res.json(await listCollection(req.userId!, query));
+}
 
 // PUT es idempotente: 201 si se añadió, 204 si ya estaba
 export async function addPokemonToCollection(req: Request, res: Response) {

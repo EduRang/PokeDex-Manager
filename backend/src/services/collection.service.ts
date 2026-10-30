@@ -1,7 +1,8 @@
 import { CollectionEntryModel } from "../models/CollectionEntry.js";
 import { HttpError } from "../errors/HttpError.js";
 import { isDuplicateKeyError } from "../errors/mongoErrors.js";
-import { findPokemonById } from "./pokemon.service.js";
+import type { CollectionPage } from "../types/collection.js";
+import { findPokemonById, getSpriteUrl } from "./pokemon.service.js";
 
 /**
  * Añade un Pokémon a la colección del usuario, con una copia de su nombre y
@@ -40,4 +41,42 @@ export async function removeFromCollection(
   pokemonId: number,
 ): Promise<void> {
   await CollectionEntryModel.deleteOne({ user: userId, pokemonId });
+}
+
+interface CollectionQuery {
+  page: number;
+  limit: number;
+}
+
+// Se lee solo desde MongoDB, sin depender de PokéAPI.
+// La paginación la hace la base de datos con el índice { user, createdAt, _id }
+export async function listCollection(
+  userId: string,
+  { page, limit }: CollectionQuery,
+): Promise<CollectionPage> {
+  const filter = { user: userId };
+  const [entries, total] = await Promise.all([
+    CollectionEntryModel.find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    CollectionEntryModel.countDocuments(filter),
+  ]);
+
+  return {
+    pokemon: entries.map((entry) => ({
+      id: entry.pokemonId,
+      name: entry.name,
+      sprite: getSpriteUrl(entry.pokemonId),
+      types: entry.types,
+      addedAt: entry.createdAt.toISOString(),
+    })),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 }

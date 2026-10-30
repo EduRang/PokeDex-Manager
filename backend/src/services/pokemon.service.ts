@@ -59,12 +59,16 @@ function toPokemonDetail(raw: PokeApiPokemon): CachedPokemonDetail {
   };
 }
 
+// Los sprites siguen un patrón por id, así no hace falta pedir el detalle
+// de cada Pokémon solo para mostrar su imagen en el listado
+export function getSpriteUrl(id: number): string {
+  return `${env.POKEAPI_SPRITES_URL}/${id}.png`;
+}
+
 function toPokemonSummaries(raw: PokeApiResourceList): PokemonSummary[] {
   return raw.results.map((r) => {
     const id = Number(r.url.match(/\/(\d+)\/?$/)?.[1]);
-    // Los sprites siguen un patrón por id, así no hace falta pedir el detalle
-    // de cada Pokémon solo para mostrar su imagen en el listado
-    return { id, name: r.name, sprite: `${env.POKEAPI_SPRITES_URL}/${id}.png` };
+    return { id, name: r.name, sprite: getSpriteUrl(id) };
   });
 }
 
