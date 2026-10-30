@@ -30,7 +30,8 @@ const SEED_USERS = [
     username: "misty",
     email: "misty@pokedex.test",
     password: "Starmie#2026",
-    // Casi todos de agua: para probar la búsqueda y el filtro por tipos
+    // Todos de agua (algunos con un segundo tipo): para probar la búsqueda y
+    // el filtro por tipos
     pokemonIds: [7, 54, 55, 60, 116, 118, 120, 121, 129, 131],
   },
   {
