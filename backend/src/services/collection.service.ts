@@ -43,6 +43,15 @@ export async function removeFromCollection(
   await CollectionEntryModel.deleteOne({ user: userId, pokemonId });
 }
 
+// Usa el índice único { user, pokemonId }
+export async function isInCollection(
+  userId: string,
+  pokemonId: number,
+): Promise<boolean> {
+  const entry = await CollectionEntryModel.exists({ user: userId, pokemonId });
+  return entry !== null;
+}
+
 interface CollectionQuery {
   page: number;
   limit: number;

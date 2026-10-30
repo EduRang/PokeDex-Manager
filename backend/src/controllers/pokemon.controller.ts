@@ -11,6 +11,7 @@ import {
   listPokemonTypes,
   searchPokemon,
 } from "../services/pokemon.service.js";
+import { isInCollection } from "../services/collection.service.js";
 
 // El parámetro de la URL se llama "type", pero ya validado es una
 // lista de hasta 2 tipos, por eso el servicio lo recibe como "types"
@@ -31,6 +32,10 @@ export async function getPokemonTypes(_req: Request, res: Response) {
 export async function getPokemon(req: Request, res: Response) {
   const { id } = pokemonIdParamSchema.parse(req.params);
   const pokemon = await getPokemonDetail(id);
-  const neighbors = await getPokemonNeighbors(pokemon.id);
-  res.json({ pokemon, ...neighbors });
+  // inCollection va fuera de "pokemon": depende del usuario, no del Pokémon
+  const [neighbors, inCollection] = await Promise.all([
+    getPokemonNeighbors(pokemon.id),
+    isInCollection(req.userId!, pokemon.id),
+  ]);
+  res.json({ pokemon, ...neighbors, inCollection });
 }
