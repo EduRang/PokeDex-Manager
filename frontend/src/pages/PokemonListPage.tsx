@@ -90,7 +90,7 @@ export function PokemonListPage() {
         {data && (
           <PokemonCountBadge
             total={data.pagination.total}
-            filtered={filtered}
+            label={filtered ? "Pokémon encontrados" : "Pokémon en total"}
           />
         )}
         <PokemonFilters

@@ -22,6 +22,7 @@ import {
   formatPokemonNumber,
 } from "../utils/format";
 import type { PokemonDetail } from "../types/pokemon";
+import { isFromCollection } from "../utils/navigation";
 
 const APP_TITLE = "PokéDex Manager";
 
@@ -42,12 +43,15 @@ export function PokemonDetailPage() {
     };
   }, [pokemon]);
 
+  // Si la ficha se abrió desde "Mi colección", "Volver" lleva allí
+  const fromCollection = isFromCollection(location.state);
+
   // Volver atrás en el historial conserva la página, la búsqueda y los tipos de la lista
   // Si se entró directamente (enlace compartido), no hay a dónde
   // volver dentro de la app, así que se va a la lista
   function goBack() {
     if (location.key !== "default") navigate(-1);
-    else navigate("/");
+    else navigate(fromCollection ? "/collection" : "/");
   }
 
   let content: ReactNode;
@@ -89,15 +93,19 @@ export function PokemonDetailPage() {
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Button variant="secondary" onClick={goBack}>
-          <span aria-hidden="true">◀</span> Volver a la Pokédex
+          <span aria-hidden="true">◀</span>{" "}
+          {fromCollection ? "Volver a mi colección" : "Volver a la Pokédex"}
         </Button>
 
+        {/* replace sustituye la entrada del historial. Se le pasa el mismo
+            state para no perder desde dónde se abrió la primera ficha */}
         {(previous || next) && (
           <nav aria-label="Pokémon anterior y siguiente" className="flex gap-2">
             {previous && (
               <LinkButton
                 to={`/pokemon/${previous.id}`}
                 replace
+                state={location.state}
                 aria-label={`Anterior: ${formatPokemonNumber(previous.id)} ${formatPokemonName(previous.name)}`}
               >
                 <span aria-hidden="true">◀</span>
@@ -111,6 +119,7 @@ export function PokemonDetailPage() {
               <LinkButton
                 to={`/pokemon/${next.id}`}
                 replace
+                state={location.state}
                 aria-label={`Siguiente: ${formatPokemonNumber(next.id)} ${formatPokemonName(next.name)}`}
               >
                 {formatPokemonNumber(next.id)}
