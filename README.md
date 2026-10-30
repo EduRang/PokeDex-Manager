@@ -15,6 +15,7 @@ En el frontend se puede recorrer la Pokédex página a página, buscar por nombr
 - [API](#api)
 - [Base de datos](#base-de-datos)
 - [Decisiones técnicas](#decisiones-técnicas)
+- [Pendiente y mejoras futuras](#pendiente-y-mejoras-futuras)
 
 ## Stack
 
@@ -466,3 +467,46 @@ PokéAPI permite 100 solicitudes por minuto, así que el backend nunca pide lo m
   - El backend permite CORS con credenciales solo desde `CLIENT_URL`.
   - Lo recomendable es servir frontend y backend bajo el mismo sitio (ej. `app.dominio.com` y `api.dominio.com`, o un proxy inverso): así la cookie puede seguir con `SameSite=Strict`.
   - Si están en dominios distintos (ej. Vercel y Heroku), hace falta `COOKIE_SAMESITE=none`, que exige HTTPS (`COOKIE_SECURE=true`). La comprobación de `Origin` sigue protegiendo contra CSRF, pero algunos navegadores bloquean las cookies de terceros.
+
+## Pendiente y mejoras futuras
+
+Todas las funcionalidades obligatorias de la prueba están implementadas. Esta sección recoge los puntos opcionales que faltan y las mejoras que haría con más tiempo y cómo las implementaría.
+
+### Bonificaciones pendientes
+
+- **Pruebas:** `vitest` y `supertest` (backend) y Testing Library (frontend) ya están instalados, pero todavía no hay pruebas (`npm test` del backend falla porque no encuentra ninguna).
+  - Separar `server.ts` en `app.ts` (crea la aplicación de Express) y `server.ts` (conecta y escucha), para probar la API con `supertest` sin levantar el servidor.
+  - Unitarias: validadores (tipos combinados, `pokemonId`), `toLocalizedName`, el escape del texto de búsqueda y el cálculo de los números de la paginación.
+  - Frontend: los hooks (ej. `useListFilters`, el caché de `useCollection`) y los componentes con interacción (paginación, botón de capturar).
+- **Despliegue:**
+  - Base de datos en MongoDB Atlas (plan gratuito).
+  - Backend con su `Dockerfile` en Render, con `COOKIE_SECURE=true` y `CLIENT_URL` con el dominio del frontend.
+  - Frontend en Vercel, con una regla de reescritura que envíe `/api/*` al backend. Así el navegador ve un solo dominio: la cookie mantiene `SameSite=Strict`, no hace falta CORS y se evita el bloqueo de cookies de terceros de Safari y Chrome. `VITE_API_URL` quedaría vacío, para que el frontend llame a `/api` en su propio dominio.
+  - Datos de prueba: ejecutar el seed desde local con `MONGO_URI` apuntando a Atlas.
+- **PWA (aplicación instalable):** un manifiesto web (nombre, colores e iconos a partir de la Poké Ball) para poder instalarla en el móvil o el escritorio.
+- **Colección de Postman:** con todas las rutas, los usuarios de prueba y un script que guarde el access token al iniciar sesión para usarlo en el resto de solicitudes.
+- **Capturas de pantalla:** una sección en el README con capturas del inicio de sesión, la Pokédex con filtros, la ficha de un Pokémon y "Mi colección", en escritorio y en móvil.
+
+### Mejoras
+
+**Seguridad**
+
+- **Límite de intentos:** hoy no hay límite de solicitudes, así que se podrían probar contraseñas sin freno. Con `express-rate-limit` en `/api/auth/login` y `/api/auth/register` (por ejemplo, 10 intentos cada 15 minutos por IP), respondiendo `429`.
+
+**Funcionalidad**
+
+- **Gestión de la colección:** apodos y notas para cada Pokémon capturado, y ordenar también por fecha de captura (la API ya devuelve `addedAt`).
+- **Filtro por tipo en la colección:** ofrecer solo los tipos que hay en la colección del usuario, no los 18.
+- **Cuenta:** cambiar la contraseña y eliminar la cuenta, con sus colecciones y sesiones.
+
+**Funcionalidades creativas**
+
+- **Progreso de la Pokédex:** "Has capturado 45 de 151 Pokémon de Kanto", con una barra por región como las de las estadísticas. Se calcula con los números de Pokédex de la colección y el rango de números de cada generación.
+- **Cadena evolutiva en la ficha:** las evoluciones del Pokémon (PokéAPI las da), marcando cuáles ya están capturadas y con enlace a su ficha.
+- **Equipo Pokémon:** elegir hasta 6 de la colección y ver la cobertura de tipos del equipo, es decir, a qué tipos es débil o resistente, con las relaciones de daño que PokéAPI da para cada tipo.
+- **Sonidos:** música de fondo de estilo videojuego, desactivada por defecto, con un botón para activarla, pausarla o cambiar de canción. En la ficha, un botón para reproducir el grito del Pokémon (PokéAPI incluye el de cada uno).
+
+**DevOps**
+
+- **Integración continua:** GitHub Actions que ejecute lint, build y pruebas en cada pull request.
+- **Logs estructurados:** `pino` en lugar de `console`, con un identificador por solicitud, para poder buscarlos y filtrarlos en producción.
