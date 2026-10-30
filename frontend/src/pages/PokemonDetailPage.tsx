@@ -137,13 +137,13 @@ function PokemonDetailView({ pokemon, typeLabels }: PokemonDetailViewProps) {
     ...regularAbilities.map((ability, index) => ({
       label:
         regularAbilities.length > 1 ? `Habilidad ${index + 1}` : "Habilidad",
-      value: formatPokemonName(ability.name),
+      value: ability.label,
     })),
     ...pokemon.abilities
       .filter((ability) => ability.isHidden)
       .map((ability) => ({
         label: "Hab. oculta",
-        value: formatPokemonName(ability.name),
+        value: ability.label,
       })),
   ];
 

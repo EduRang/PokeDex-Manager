@@ -1,11 +1,11 @@
 import { useState, type InputHTMLAttributes, type ReactNode } from "react";
 
-type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
+interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   name: string;
   error?: string;
   hint?: ReactNode;
-};
+}
 
 export function TextField({
   label,
