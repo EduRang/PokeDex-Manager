@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { usePokemonDetail } from "../hooks/usePokemonDetail";
 import { usePokemonTypes } from "../hooks/usePokemonTypes";
-import { Button } from "../components/Button";
+import { Button, LinkButton } from "../components/Button";
 import { Panel } from "../components/Panel";
 import {
   InfoRow,
@@ -28,7 +28,8 @@ export function PokemonDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { pokemon, error, notFound, retry } = usePokemonDetail(id);
+  const { pokemon, previous, next, error, notFound, retry } =
+    usePokemonDetail(id);
   const { labels } = usePokemonTypes();
 
   // Nombre del Pokémon en la pestaña del navegador
@@ -79,9 +80,42 @@ export function PokemonDetailPage() {
 
   return (
     <section className="space-y-4">
-      <Button variant="secondary" onClick={goBack}>
-        <span aria-hidden="true">◀</span> Volver a la Pokédex
-      </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Button variant="secondary" onClick={goBack}>
+          <span aria-hidden="true">◀</span> Volver a la Pokédex
+        </Button>
+
+        {(previous || next) && (
+          <nav aria-label="Pokémon anterior y siguiente" className="flex gap-2">
+            {previous && (
+              <LinkButton
+                to={`/pokemon/${previous.id}`}
+                replace
+                aria-label={`Anterior: ${formatPokemonNumber(previous.id)} ${formatPokemonName(previous.name)}`}
+              >
+                <span aria-hidden="true">◀</span>
+                {formatPokemonNumber(previous.id)}
+                <span className="hidden sm:inline">
+                  {formatPokemonName(previous.name)}
+                </span>
+              </LinkButton>
+            )}
+            {next && (
+              <LinkButton
+                to={`/pokemon/${next.id}`}
+                replace
+                aria-label={`Siguiente: ${formatPokemonNumber(next.id)} ${formatPokemonName(next.name)}`}
+              >
+                {formatPokemonNumber(next.id)}
+                <span className="hidden sm:inline">
+                  {formatPokemonName(next.name)}
+                </span>
+                <span aria-hidden="true">▶</span>
+              </LinkButton>
+            )}
+          </nav>
+        )}
+      </div>
       {content}
     </section>
   );

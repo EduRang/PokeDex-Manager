@@ -28,6 +28,18 @@ export interface PokemonListItem {
   types: string[];
 }
 
+export interface PokemonNeighbor {
+  id: number;
+  name: string;
+  sprite: string;
+}
+
+export interface PokemonDetailResponse {
+  pokemon: PokemonDetail;
+  previous: PokemonNeighbor | null;
+  next: PokemonNeighbor | null;
+}
+
 export interface Pagination {
   page: number;
   limit: number;
