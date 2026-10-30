@@ -21,8 +21,19 @@ export interface PokeApiResourceList {
   results: NamedResource[];
 }
 
+// Nombre traducido a un idioma ("es-419", "es", "en"...)
+export interface PokeApiLocalizedName {
+  name: string;
+  language: NamedResource;
+}
+
 export interface PokeApiType {
   name: string;
-  names: { name: string; language: NamedResource }[];
+  names: PokeApiLocalizedName[];
   pokemon: { slot: number; pokemon: NamedResource }[];
+}
+
+export interface PokeApiAbility {
+  name: string;
+  names: PokeApiLocalizedName[];
 }

@@ -5,6 +5,7 @@ export interface PokemonStat {
 
 export interface PokemonAbility {
   name: string;
+  label: string;
   isHidden: boolean;
 }
 

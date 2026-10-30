@@ -15,7 +15,11 @@ import {
 
 const SALT_ROUNDS = 12;
 
-type UserDoc = { id: string; username: string; email: string };
+interface UserDoc {
+  id: string;
+  username: string;
+  email: string;
+}
 
 function toPublicUser(user: UserDoc) {
   return { id: user.id, username: user.username, email: user.email };
